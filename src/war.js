@@ -13,8 +13,13 @@ const bgImage = new Image();
 let gameActive = false;
 
 const keys = {
-    a: { pressed: false }, d: { pressed: false }, w: { pressed: false }, s: { pressed: false },
-    ArrowLeft: { pressed: false }, ArrowRight: { pressed: false }, ArrowUp: { pressed: false }, ArrowDown: { pressed: false }
+    // P1 - stored by code to be layout-agnostic
+    KeyA: { pressed: false }, KeyD: { pressed: false }, KeyQ: { pressed: false },
+    KeyW: { pressed: false }, KeyZ: { pressed: false }, KeyS: { pressed: false },
+    KeyF: { pressed: false }, KeyG: { pressed: false }, KeyE: { pressed: false },
+    // P2
+    ArrowLeft: { pressed: false }, ArrowRight: { pressed: false },
+    ArrowUp: { pressed: false }, ArrowDown: { pressed: false }
 };
 
 // --- NETWORKING LOGIC (WebRTC via PeerJS) ---
@@ -504,8 +509,15 @@ function determineWinner() {
     document.getElementById('restart-btn').style.display = isHost ? 'block' : 'none';
 }
 
+function resetAllKeys() {
+    Object.keys(keys).forEach(k => { keys[k].pressed = false; });
+    player1.isBlocking = false;
+    player2.isBlocking = false;
+}
+
 function startGame() {
     player1.setHead(p1Choice); player2.setHead(p2Choice); bgImage.src = bgChoice;
+    resetAllKeys();
     document.getElementById('p1-name').innerText = formatCharacterName(p1Choice);
     document.getElementById('p2-name').innerText = formatCharacterName(p2Choice);
     document.getElementById('character-select').style.display = 'none';
@@ -527,6 +539,7 @@ function startGame() {
 function returnToMenu() {
     if (isHost) conn.send({ type: 'restart' });
     gameActive = false;
+    resetAllKeys();
     document.getElementById('display-text').style.display = 'none';
     document.getElementById('ui').style.display = 'none';
     document.getElementById('character-select').style.display = 'flex';
@@ -555,7 +568,7 @@ function animate() {
             else { player1.side = 'right'; player2.side = 'left'; }
         }
 
-        player1.isBlocking = keys.s.pressed && player1.isGrounded;
+        player1.isBlocking = keys.KeyS.pressed && player1.isGrounded;
         player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
 
         // Move P1
@@ -567,7 +580,8 @@ function animate() {
             }
             if (player1.attackTimer <= 0) player1.isCharging = false;
         } else if (!player1.isStunned && !player1.isKO && !player1.isBlocking) {
-            if (keys.a.pressed) player1.velocity.x = -6; else if (keys.d.pressed) player1.velocity.x = 6;
+            if (keys.KeyA.pressed || keys.KeyQ.pressed) player1.velocity.x = -6;
+            else if (keys.KeyD.pressed) player1.velocity.x = 6;
         }
 
         // Move P2
@@ -656,9 +670,15 @@ function animate() {
     ctx.restore();
 }
 
+// Reset all keys when window loses focus (prevents stuck keys on alt-tab)
+window.addEventListener('blur', () => {
+    if (conn) resetAllKeys();
+});
+
 // Input handling router
 window.addEventListener('keydown', (e) => {
     if (gameOver || !gameActive || !conn) return;
+    e.preventDefault(); // prevent arrow keys scrolling the page
     if (isHost) handleInput(e.key, e.code, true);
     else conn.send({ type: 'keydown', key: e.key, code: e.code });
 });
@@ -670,42 +690,51 @@ window.addEventListener('keyup', (e) => {
 });
 
 // Centralized input processing (Host Only)
+// Uses e.code (physical key position) to be fully layout-agnostic (AZERTY/QWERTY/etc.)
+// P1: WASD zone  |  P2: Arrow keys zone  — zero overlap possible
 function handleInput(keyString, codeString, isKeyDown) {
-    const key = keyString.toLowerCase();
 
-    // Player 1 controls (Host Local)
-    if (key === 'd' || key === 'a' || key === 'q' || key === 'w' || key === 'z' || key === 's' || key === 'f' || key === 'g' || key === 'e') {
+    // ── PLAYER 1 (Host local — physical WASD zone) ──────────────────────────
+    const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
+    if (p1Codes.includes(codeString)) {
         const canP1Act = !player1.isStunned && !player1.isKO;
         if (isKeyDown && canP1Act) {
-            if (key === 'd' && !player1.isBlocking) keys.d.pressed = true;
-            if ((key === 'a' || key === 'q') && !player1.isBlocking) keys.a.pressed = true;
-            if ((key === 'w' || key === 'z') && player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
-            if (key === 's' && player1.isGrounded && !player1.isAttacking) { keys.s.pressed = true; if (!player1.isBlocking) { player1.isBlocking = true; player1.perfectBlockWindow = 10; } }
-            if (key === 'f') player1.attack('punch');
-            if (key === 'g') player1.attack('kick');
-            if (key === 'e') player1.attack('ulti');
+            if (codeString === 'KeyD' && !player1.isBlocking) keys.KeyD.pressed = true;
+            if ((codeString === 'KeyA' || codeString === 'KeyQ') && !player1.isBlocking) keys.KeyA.pressed = true;
+            if ((codeString === 'KeyW' || codeString === 'KeyZ') && player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
+            if (codeString === 'KeyS' && player1.isGrounded && !player1.isAttacking) {
+                keys.KeyS.pressed = true;
+                if (!player1.isBlocking) { player1.isBlocking = true; player1.perfectBlockWindow = 10; }
+            }
+            if (codeString === 'KeyF') player1.attack('punch');
+            if (codeString === 'KeyG') player1.attack('kick');
+            if (codeString === 'KeyE') player1.attack('ulti');
         } else if (!isKeyDown) {
-            if (key === 'd') keys.d.pressed = false;
-            if (key === 'a' || key === 'q') keys.a.pressed = false;
-            if (key === 's') { keys.s.pressed = false; player1.isBlocking = false; }
+            if (codeString === 'KeyD') keys.KeyD.pressed = false;
+            if (codeString === 'KeyA' || codeString === 'KeyQ') keys.KeyA.pressed = false;
+            if (codeString === 'KeyS') { keys.KeyS.pressed = false; player1.isBlocking = false; }
         }
     }
 
-    // Player 2 controls (Received from Client)
-    if (key === 'arrowright' || key === 'arrowleft' || key === 'arrowup' || key === 'arrowdown' || key === 'enter' || codeString === 'ShiftRight' || codeString === 'ControlRight') {
+    // ── PLAYER 2 (Client remote — Arrow keys zone) ──────────────────────────
+    const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
+    if (p2Codes.includes(codeString)) {
         const canP2Act = !player2.isStunned && !player2.isKO;
         if (isKeyDown && canP2Act) {
-            if (key === 'arrowright' && !player2.isBlocking) keys.ArrowRight.pressed = true;
-            if (key === 'arrowleft' && !player2.isBlocking) keys.ArrowLeft.pressed = true;
-            if (key === 'arrowup' && player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
-            if (key === 'arrowdown' && player2.isGrounded && !player2.isAttacking) { keys.ArrowDown.pressed = true; if (!player2.isBlocking) { player2.isBlocking = true; player2.perfectBlockWindow = 10; } }
+            if (codeString === 'ArrowRight' && !player2.isBlocking) keys.ArrowRight.pressed = true;
+            if (codeString === 'ArrowLeft' && !player2.isBlocking) keys.ArrowLeft.pressed = true;
+            if (codeString === 'ArrowUp' && player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
+            if (codeString === 'ArrowDown' && player2.isGrounded && !player2.isAttacking) {
+                keys.ArrowDown.pressed = true;
+                if (!player2.isBlocking) { player2.isBlocking = true; player2.perfectBlockWindow = 10; }
+            }
             if (codeString === 'ShiftRight') player2.attack('punch');
             if (codeString === 'ControlRight') player2.attack('kick');
-            if (key === 'enter') player2.attack('ulti');
+            if (codeString === 'Enter' || codeString === 'NumpadEnter') player2.attack('ulti');
         } else if (!isKeyDown) {
-            if (key === 'arrowright') keys.ArrowRight.pressed = false;
-            if (key === 'arrowleft') keys.ArrowLeft.pressed = false;
-            if (key === 'arrowdown') { keys.ArrowDown.pressed = false; player2.isBlocking = false; }
+            if (codeString === 'ArrowRight') keys.ArrowRight.pressed = false;
+            if (codeString === 'ArrowLeft') keys.ArrowLeft.pressed = false;
+            if (codeString === 'ArrowDown') { keys.ArrowDown.pressed = false; player2.isBlocking = false; }
         }
     }
 }
