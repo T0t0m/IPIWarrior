@@ -34,6 +34,8 @@ function startLocal() {
     document.getElementById('main-menu').style.display = 'none';
     document.getElementById('character-select').style.display = 'flex';
     document.getElementById('start-fight-btn').style.display = 'block';
+
+    updateControlsVisibility();
 }
 
 function showNetworkMenu() {
@@ -62,6 +64,8 @@ function hostGame() {
         document.getElementById('network-menu').style.display = 'none';
         document.getElementById('character-select').style.display = 'flex';
         document.getElementById('start-fight-btn').style.display = 'block';
+
+        updateControlsVisibility();
     });
 }
 
@@ -80,6 +84,8 @@ function joinGame() {
             document.getElementById('network-menu').style.display = 'none';
             document.getElementById('character-select').style.display = 'flex';
             document.getElementById('waiting-host-msg').style.display = 'block';
+
+            updateControlsVisibility();
         });
     });
 }
@@ -727,7 +733,6 @@ window.addEventListener('keyup', (e) => {
     }
 });
 
-// Le moteur ne change pas. Il croit recevoir des flèches directionnelles de P2 !
 function handleInput(keyString, codeString, isKeyDown) {
     const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
     if (p1Codes.includes(codeString)) {
@@ -768,6 +773,26 @@ function handleInput(keyString, codeString, isKeyDown) {
             if (codeString === 'ArrowRight') keys.ArrowRight.pressed = false;
             if (codeString === 'ArrowLeft') keys.ArrowLeft.pressed = false;
             if (codeString === 'ArrowDown') { keys.ArrowDown.pressed = false; player2.isBlocking = false; }
+        }
+    }
+}
+
+// Fonction pour gérer l'affichage dynamique des contrôles
+function updateControlsVisibility() {
+    document.getElementById('controls-footer').style.display = 'flex';
+    const p1c = document.getElementById('p1-controls');
+    const p2c = document.getElementById('p2-controls');
+
+    if (isLocalMode) {
+        p1c.style.display = 'block';
+        p2c.style.display = 'block';
+    } else {
+        if (isHost) {
+            p1c.style.display = 'block';
+            p2c.style.display = 'none';
+        } else {
+            p1c.style.display = 'none';
+            p2c.style.display = 'block';
         }
     }
 }

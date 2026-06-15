@@ -6,7 +6,6 @@
 
 body {
     background-color: #1a1a1a;
-    /* Application de la typo pixel/arcade demandée */
     font-family: 'Sixtyfour Convergence', 'Courier New', Courier, monospace;
     display: flex;
     flex-direction: column;
@@ -24,61 +23,63 @@ h1 {
     letter-spacing: 2px;
 }
 
-/* --- Disposition Arcade (Panneaux latéraux) --- */
+/* --- Disposition Arcade (Centrée et empilée) --- */
 .game-wrapper {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 30px;
+    gap: 15px;
     width: 100%;
-    max-width: 1500px;
-    flex-wrap: wrap;
-    padding: 20px;
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 10px;
 }
 
-.side-controls {
+/* --- Nouveaux contrôles en bas --- */
+#controls-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.bottom-controls {
     background: #111;
-    padding: 20px;
-    border: 4px solid #444; /* Bords stricts pixelisés */
-    box-shadow: 8px 8px 0px rgba(0, 0, 0, 1);
-    min-width: 190px;
+    padding: 8px 15px;
+    border: 2px solid #444;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
     text-align: center;
+    flex: 1;
+    max-width: 500px;
 }
 
-.side-controls h3 {
-    font-size: 16px;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 0px #000;
-    line-height: 1.5;
-}
-
-.side-controls small {
-    font-size: 10px;
-    color: #aaa;
-}
-
-.control-box p {
-    background: #1a1a24;
-    padding: 12px 10px;
-    margin-bottom: 15px;
-    border: 2px solid #333;
+.bottom-controls h3 {
     font-size: 12px;
+    margin-bottom: 6px;
+    text-shadow: 1px 1px 0px #000;
+}
+
+.control-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.control-row span {
+    background: #1a1a24;
+    padding: 4px 6px;
+    border: 1px solid #333;
+    font-size: 10px;
     color: #ccc;
-    line-height: 1.4;
+    white-space: nowrap;
 }
 
-.control-box p:last-child {
-    margin-bottom: 0;
-}
-
-.control-box p strong {
+.control-row span strong {
     color: #fff;
-    font-size: 14px;
-    display: inline-block;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    margin-right: 4px;
 }
 
 .p1-color {
@@ -509,9 +510,8 @@ canvas {
     .bg-portrait { width: 100px; height: 60px; }
 }
 
-@media (max-width: 850px) {
-    .side-controls { width: 100%; display: flex; justify-content: space-around; flex-wrap: wrap; }
-    .side-controls h3 { width: 100%; margin-bottom: 10px; }
-    .control-box { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-    .control-box p { margin-bottom: 0; }
+@media (max-width: 600px) {
+    #controls-footer {
+        flex-direction: column;
+    }
 }
