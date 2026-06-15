@@ -6,7 +6,6 @@
 
 body {
     background-color: #1a1a1a;
-    /* Application de la typo pixel/arcade demandée */
     font-family: 'Sixtyfour Convergence', 'Courier New', Courier, monospace;
     display: flex;
     flex-direction: column;
@@ -19,9 +18,42 @@ body {
 
 h1 {
     margin-bottom: 10px;
-    text-shadow: 4px 4px 0px #00d2ff;
+    text-shadow: 4px 4px 0px #000;
+    /* CORRECTION : Ombre noire propre au lieu du bleu */
     text-transform: uppercase;
     letter-spacing: 2px;
+}
+
+/* Forçage brutale de TOUTES les couches de la police pour annuler le glitch natif */
+@font-palette-values --p1-palette {
+    font-family: 'Sixtyfour Convergence';
+    override-colors: 0 #ff0000, 1 #ff0000, 2 #ff0000, 3 #ff0000, 4 #ff0000, 5 #ff0000, 6 #ff0000, 7 #ff0000;
+}
+
+@font-palette-values --p2-palette {
+    font-family: 'Sixtyfour Convergence';
+    override-colors: 0 #0000ff, 1 #0000ff, 2 #0000ff, 3 #0000ff, 4 #0000ff, 5 #0000ff, 6 #0000ff, 7 #0000ff;
+}
+
+@font-palette-values --white-palette {
+    font-family: 'Sixtyfour Convergence';
+    override-colors: 0 #ffffff, 1 #ffffff, 2 #ffffff, 3 #ffffff, 4 #ffffff, 5 #ffffff, 6 #ffffff, 7 #ffffff;
+}
+
+/* Application des palettes */
+.p1-color {
+    color: #ff0000 !important;
+    font-palette: --p1-palette !important;
+}
+
+.p2-color {
+    color: #0000ff !important;
+    font-palette: --p2-palette !important;
+}
+
+.white-color {
+    color: #ffffff !important;
+    font-palette: --white-palette !important;
 }
 
 /* --- Disposition Arcade (Panneaux latéraux) --- */
@@ -30,19 +62,20 @@ h1 {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 30px;
+    gap: 2vw;
     width: 100%;
-    max-width: 1500px;
+    max-width: 100vw;
     flex-wrap: wrap;
-    padding: 20px;
+    padding: 2vh 2vw;
 }
 
 .side-controls {
     background: #111;
     padding: 20px;
-    border: 4px solid #444; /* Bords stricts pixelisés */
+    border: 4px solid #444;
     box-shadow: 8px 8px 0px rgba(0, 0, 0, 1);
-    min-width: 190px;
+    width: 220px;
+    flex-shrink: 0;
     text-align: center;
 }
 
@@ -60,10 +93,11 @@ h1 {
 
 .control-box p {
     background: #1a1a24;
-    padding: 12px 10px;
+    padding: 12px 5px;
     margin-bottom: 15px;
     border: 2px solid #333;
-    font-size: 12px;
+    font-size: 11px;
+    word-wrap: break-word;
     color: #ccc;
     line-height: 1.4;
 }
@@ -73,7 +107,6 @@ h1 {
 }
 
 .control-box p strong {
-    color: #fff;
     font-size: 14px;
     display: inline-block;
     margin-bottom: 5px;
@@ -81,26 +114,28 @@ h1 {
     letter-spacing: 1px;
 }
 
-.p1-color {
-    color: #ff3377;
+.game-wrapper>.side-controls:first-child p strong {
+    color: #ff0000 !important;
+    font-palette: --p1-palette !important;
 }
 
-.p2-color {
-    color: #33ccff;
+.game-wrapper>.side-controls:last-child p strong {
+    color: #0000ff !important;
+    font-palette: --p2-palette !important;
 }
 
 /* --- Écran de jeu principal --- */
 #game-container {
     position: relative;
     box-sizing: content-box;
-    width: 100%;
-    max-width: 1024px;
-    height: auto;
+    flex: 1 1 auto;
+    max-height: 75vh;
     aspect-ratio: 1024 / 576;
+    margin: 0 auto;
     box-shadow: 10px 10px 0px rgba(0, 0, 0, 1);
     border: 6px solid #555;
     background: linear-gradient(to bottom, #2a2a35 0%, #1a1a24 100%);
-    image-rendering: pixelated; /* Look rétro */
+    image-rendering: pixelated;
 }
 
 canvas {
@@ -109,7 +144,30 @@ canvas {
     height: 100%;
 }
 
-/* Nouveau Menu Principal */
+/* Overlays HTML pour les textes d'ulti */
+.ulti-text-overlay {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 9.5%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 4vh;
+    z-index: 6;
+    text-shadow: 2px 2px 0 #000;
+}
+
+#p1-ulti-text {
+    top: 28%;
+}
+
+#p2-ulti-text {
+    top: 42%;
+}
+
+/* --- Menu Principal --- */
 #main-menu {
     position: absolute;
     top: 0;
@@ -121,20 +179,21 @@ canvas {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 3vh;
     z-index: 30;
 }
 
 #main-menu h2 {
     font-size: 48px;
-    text-shadow: 4px 4px 0 #ff0055, -4px -4px 0 #00d2ff;
-    margin-bottom: 50px;
+    text-shadow: 4px 4px 0 #000;
+    /* Ombre noire propre */
+    text-align: center;
 }
 
 .menu-btn {
     font-family: inherit;
     font-size: 20px;
     padding: 15px 30px;
-    margin: 15px;
     cursor: pointer;
     background: #222;
     color: #fff;
@@ -149,7 +208,7 @@ canvas {
     transform: scale(1.05);
 }
 
-/* Character Select Menu Overlay */
+/* --- Menu de Sélection des Combattants --- */
 #character-select {
     position: absolute;
     top: 0;
@@ -160,27 +219,29 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-evenly;
+    padding: 2vh 0;
     z-index: 10;
+    overflow: hidden;
 }
 
 #character-select h2 {
     font-size: 24px;
-    margin-bottom: 30px;
-    text-shadow: 2px 2px 0px #ffcc00;
+    text-shadow: 4px 4px 0px #000;
+    margin: 0;
 }
 
 .selection-area {
     display: flex;
     width: 90%;
     justify-content: space-around;
-    margin-bottom: 40px;
+    margin: 0;
 }
 
 .player-select {
     text-align: center;
     background: #222;
-    padding: 20px;
+    padding: 15px;
     border: 4px solid #444;
 }
 
@@ -220,15 +281,15 @@ canvas {
 }
 
 .selected-p1 {
-    border-color: #ff0055;
-    box-shadow: 4px 4px 0px #ff0055;
-    background-color: #550011;
+    border-color: #ff0000;
+    box-shadow: 4px 4px 0px #ff0000;
+    background-color: #550000;
 }
 
 .selected-p2 {
-    border-color: #00d2ff;
-    box-shadow: 4px 4px 0px #00d2ff;
-    background-color: #002233;
+    border-color: #0000ff;
+    box-shadow: 4px 4px 0px #0000ff;
+    background-color: #000044;
 }
 
 #start-fight-btn {
@@ -241,6 +302,7 @@ canvas {
     cursor: pointer;
     box-shadow: 4px 4px 0 #fff;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 #start-fight-btn:hover {
@@ -290,12 +352,12 @@ canvas {
 
 #p1-health {
     right: 0;
-    background: #ff0055;
+    background: #ff0000;
 }
 
 #p2-health {
     left: 0;
-    background: #00d2ff;
+    background: #0000ff;
 }
 
 /* --- Barres d'Ultimate --- */
@@ -353,8 +415,8 @@ canvas {
     display: none;
     align-items: center;
     justify-content: center;
+    gap: 3vh;
     font-size: 32px;
-    color: #fff;
     background-color: rgba(0, 0, 0, 0.8);
     text-shadow: 4px 4px 0 #000;
     flex-direction: column;
@@ -362,30 +424,30 @@ canvas {
 }
 
 #restart-btn {
-    margin-top: 20px;
     padding: 10px 20px;
     font-family: inherit;
     font-size: 16px;
-    background-color: #00d2ff;
-    color: #000;
-    border: 4px solid #000;
+    background-color: #222;
+    border: 4px solid #fff;
     cursor: pointer;
     pointer-events: auto;
+    text-transform: uppercase;
 }
 
 #restart-btn:hover {
-    background-color: #00aacc;
+    background-color: #fff;
+    color: #000;
 }
 
 /* --- Sélection du Stage (Background) --- */
 .stage-select {
     text-align: center;
-    margin-bottom: 30px;
+    margin: 0;
 }
 
 .stage-select h3 {
     font-size: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     text-shadow: 2px 2px 0 #000;
 }
 
@@ -415,7 +477,7 @@ canvas {
     box-shadow: 4px 4px 0 #00ff66;
 }
 
-/* --- Network Menu --- */
+/* --- CORRECTION : Menu Réseau restructuré pour ne plus déborder --- */
 #network-menu {
     position: absolute;
     top: 0;
@@ -427,21 +489,25 @@ canvas {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 5vh;
+    /* Espace équilibré verticalement */
     z-index: 20;
 }
 
 #network-menu h2 {
     font-size: 32px;
-    margin-bottom: 40px;
-    text-shadow: 4px 4px 0 #00ff66;
+    text-shadow: 4px 4px 0 #000;
+    /* Ombre noire pour la lisibilité */
+    margin: 0;
 }
 
 .net-actions {
     display: flex;
+    flex-direction: row;
+    /* Forcé côte à côte ! */
     gap: 40px;
     width: 80%;
     justify-content: center;
-    flex-wrap: wrap;
 }
 
 .net-box {
@@ -449,7 +515,12 @@ canvas {
     padding: 30px;
     border: 4px solid #444;
     text-align: center;
-    min-width: 300px;
+    flex: 1;
+    /* Prend l'espace équitablement avec son voisin */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .net-box h3 {
@@ -460,6 +531,7 @@ canvas {
 
 .net-box input {
     width: 100%;
+    max-width: 250px;
     padding: 10px;
     margin-bottom: 20px;
     background: #111;
@@ -475,14 +547,15 @@ canvas {
     font-size: 16px;
     font-family: inherit;
     cursor: pointer;
-    background: #00d2ff;
-    border: 4px solid #000;
-    color: #000;
+    background: #222;
+    border: 4px solid #fff;
+    color: #fff;
     transition: 0.2s;
 }
 
 .net-box button:hover {
-    background: #00ff66;
+    background: #fff;
+    color: #000;
     transform: scale(1.05);
 }
 
@@ -497,21 +570,79 @@ canvas {
     color: #ff3377;
 }
 
+/* =========================================
+   RESPONSIVE DESIGN (Tablettes & Portables)
+   ========================================= */
 @media (max-width: 1150px) {
-    #main-menu h2 { font-size: 32px; }
-    .menu-btn { font-size: 16px; }
-    #display-text { font-size: 24px; }
-    #character-select h2 { font-size: 20px; margin-bottom: 15px; }
-    .portrait { width: 60px; height: 60px; }
-    #start-fight-btn { font-size: 18px; padding: 10px 20px; }
-    #timer { font-size: 16px; width: 60px; padding: 3px 10px; }
-    .char-name { font-size: 12px; }
-    .bg-portrait { width: 100px; height: 60px; }
+    #main-menu h2 {
+        font-size: 32px;
+    }
+
+    .menu-btn {
+        font-size: 16px;
+    }
+
+    #display-text {
+        font-size: 24px;
+    }
+
+    #character-select h2 {
+        font-size: 20px;
+    }
+
+    .portrait {
+        width: 60px;
+        height: 60px;
+    }
+
+    #start-fight-btn {
+        font-size: 18px;
+        padding: 10px 20px;
+    }
+
+    #timer {
+        font-size: 16px;
+        width: 60px;
+        padding: 3px 10px;
+    }
+
+    .char-name {
+        font-size: 12px;
+    }
+
+    .bg-portrait {
+        width: 100px;
+        height: 60px;
+    }
 }
 
 @media (max-width: 850px) {
-    .side-controls { width: 100%; display: flex; justify-content: space-around; flex-wrap: wrap; }
-    .side-controls h3 { width: 100%; margin-bottom: 10px; }
-    .control-box { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-    .control-box p { margin-bottom: 0; }
+    .side-controls {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+    }
+
+    .side-controls h3 {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .control-box {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Si l'écran est vraiment trop petit, on les empile (smartphones) */
+    .net-actions {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .net-box {
+        padding: 15px;
+    }
 }

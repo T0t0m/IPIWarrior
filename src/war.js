@@ -333,6 +333,9 @@ class Fighter {
             if (this.stunTimer <= 0) this.isStunned = false;
         }
 
+        if (this.ultiPhraseTimer > 0) this.ultiPhraseTimer--;
+        if (this.benitoHealTimer > 0) this.benitoHealTimer--;
+
         if (this.attackType === 'punch') {
             this.attackBox.radius = 25; this.attackBox.position.y = this.position.y + 50;
         } else if (this.attackType === 'kick') {
@@ -400,6 +403,16 @@ class Fighter {
                 this.ultiPhrase = "J'AI RIEN À PROUVER !"; this.attackTimer = 40;
                 this.health = Math.min(100, this.health + 50); this.benitoHealTimer = 40;
                 updateHealthUI();
+
+                let enemy = this === player1 ? player2 : player1;
+                let dist = Math.abs((this.position.x + this.width / 2) - (enemy.position.x + enemy.width / 2));
+
+                if (dist < 150 && !enemy.isKO) {
+                    let pushDir = this.position.x < enemy.position.x ? 1 : -1;
+                    enemy.position.x += 120 * pushDir;
+                    if (enemy.position.x < 0) enemy.position.x = 0;
+                    if (enemy.position.x + enemy.width > canvas.width) enemy.position.x = canvas.width - enemy.width;
+                }
             }
             return;
         } else if (type === 'punch') {
@@ -413,8 +426,8 @@ class Fighter {
     }
 }
 
-const player1 = new Fighter({ position: { x: 150, y: 0 }, velocity: { x: 0, y: 0 }, color: '#ff0055', side: 'left' });
-const player2 = new Fighter({ position: { x: 800, y: 0 }, velocity: { x: 0, y: 0 }, color: '#00d2ff', side: 'right' });
+const player1 = new Fighter({ position: { x: 150, y: 0 }, velocity: { x: 0, y: 0 }, color: '#ff0000', side: 'left' });
+const player2 = new Fighter({ position: { x: 800, y: 0 }, velocity: { x: 0, y: 0 }, color: '#0000ff', side: 'right' });
 
 // Collisions & Combat
 function circleRectCollision(circle, rect) {
@@ -467,8 +480,6 @@ function checkHit(attacker, defender) {
 function updateHealthUI() {
     document.getElementById('p1-health').style.width = player1.health + '%';
     document.getElementById('p2-health').style.width = player2.health + '%';
-    document.getElementById('p1-ulti').style.width = player1.ultimateCharge + '%';
-    document.getElementById('p2-ulti').style.width = player2.ultimateCharge + '%';
 }
 
 function serializePlayer(p) {
@@ -516,12 +527,24 @@ function determineWinner() {
     clearTimeout(timerId); gameOver = true;
     const display = document.getElementById('display-text');
     const msg = document.getElementById('win-message');
+
+    // NOUVEAU : Application des couleurs au texte de victoire en CSS !
+    msg.className = ''; // Réinitialise les couleurs
+
+    if (player1.health === player2.health) {
+        msg.innerText = "ÉGALITÉ !";
+        msg.classList.add('white-color'); // Blanc
+    }
+    else if (player1.health > player2.health) {
+        msg.innerText = formatCharacterName(p1Choice) + " GAGNE !";
+        msg.classList.add('p1-color'); // Rouge
+    }
+    else {
+        msg.innerText = formatCharacterName(p2Choice) + " GAGNE !";
+        msg.classList.add('p2-color'); // Bleu
+    }
+
     display.style.display = 'flex';
-
-    if (player1.health === player2.health) msg.innerText = "ÉGALITÉ !";
-    else if (player1.health > player2.health) msg.innerText = formatCharacterName(p1Choice) + " GAGNE !";
-    else msg.innerText = formatCharacterName(p2Choice) + " GAGNE !";
-
     document.getElementById('restart-btn').style.display = isHost ? 'block' : 'none';
 }
 
@@ -537,6 +560,11 @@ function startGame() {
     document.getElementById('p1-name').innerText = formatCharacterName(p1Choice);
     document.getElementById('p2-name').innerText = formatCharacterName(p2Choice);
     document.getElementById('character-select').style.display = 'none';
+
+    // NOUVEAU : On s'assure que les phrases d'ulti sont masquées au départ
+    document.getElementById('p1-ulti-text').style.display = 'none';
+    document.getElementById('p2-ulti-text').style.display = 'none';
+
     document.getElementById('ui').style.display = 'flex';
 
     player1.health = 100; player1.position = { x: 150, y: 0 }; player1.isKO = false;
@@ -569,8 +597,13 @@ function animate() {
     animationId = window.requestAnimationFrame(animate);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (bgImage.complete && bgImage.naturalHeight !== 0) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-    else { ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    if (bgImage.complete && bgImage.naturalHeight !== 0) {
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     ctx.fillStyle = '#111116'; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
     ctx.fillStyle = '#fff'; ctx.fillRect(0, groundY, canvas.width, 4);
@@ -644,6 +677,7 @@ function animate() {
         }
     }
 
+    // Effets visuels canvas des ultis
     [player1, player2].forEach(p => {
         if (p.fxClockActive) {
             ctx.fillStyle = '#222'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
@@ -661,7 +695,7 @@ function animate() {
         }
         if (p.characterName === 'kotlineur' && p.isAttacking && p.attackType === 'ulti') {
             ctx.fillStyle = 'rgba(255, 0, 85, 0.18)'; ctx.fillRect(0, 0, 350, groundY); ctx.fillRect(674, 0, canvas.width - 674, groundY);
-            ctx.fillStyle = '#ff0055'; ctx.font = 'bold 18px inherit'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 18px inherit'; ctx.textAlign = 'center';
             ctx.fillText("⚠️ COIN EN FLAMMES ⚠️", 175, 80); ctx.fillText("⚠️ COIN EN FLAMMES ⚠️", 849, 80);
         }
         if (p.benitoHealTimer > 0) {
@@ -670,42 +704,58 @@ function animate() {
         }
     });
 
-    ctx.save();
+    // NOUVEAU : Affichage des phrases d'ultime via le DOM (pour forcer le CSS COLRv1)
+    const p1UltiDiv = document.getElementById('p1-ulti-text');
     if (player1.ultiPhraseTimer > 0) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; ctx.fillRect(0, 160, canvas.width, 55);
-        ctx.fillStyle = player1.color; ctx.font = 'bold 22px inherit'; ctx.textAlign = 'center';
-        ctx.fillText(formatCharacterName(p1Choice) + " : \"" + player1.ultiPhrase + "\"", canvas.width / 2, 195);
+        p1UltiDiv.innerText = formatCharacterName(p1Choice) + " : \"" + player1.ultiPhrase + "\"";
+        p1UltiDiv.style.display = 'flex';
+    } else {
+        p1UltiDiv.style.display = 'none';
     }
+
+    const p2UltiDiv = document.getElementById('p2-ulti-text');
     if (player2.ultiPhraseTimer > 0) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; ctx.fillRect(0, 240, canvas.width, 55);
-        ctx.fillStyle = player2.color; ctx.font = 'bold 22px inherit'; ctx.textAlign = 'center';
-        ctx.fillText(formatCharacterName(p2Choice) + " : \"" + player2.ultiPhrase + "\"", canvas.width / 2, 275);
+        p2UltiDiv.innerText = formatCharacterName(p2Choice) + " : \"" + player2.ultiPhrase + "\"";
+        p2UltiDiv.style.display = 'flex';
+    } else {
+        p2UltiDiv.style.display = 'none';
     }
-    ctx.restore();
+
+    document.getElementById('p1-ulti').style.width = player1.ultimateCharge + '%';
+    document.getElementById('p2-ulti').style.width = player2.ultimateCharge + '%';
 }
 
 window.addEventListener('blur', () => {
     resetAllKeys();
 });
 
-// INTERCEPTION CLAVIER POUR LE MAPPING LIGNE / LOCAL
+const clientToHostMap = {
+    'KeyD': 'ArrowRight',
+    'KeyA': 'ArrowLeft', 'KeyQ': 'ArrowLeft',
+    'KeyW': 'ArrowUp', 'KeyZ': 'ArrowUp',
+    'KeyS': 'ArrowDown',
+    'KeyF': 'ShiftRight',
+    'KeyG': 'ControlRight',
+    'KeyE': 'Enter'
+};
+
 window.addEventListener('keydown', (e) => {
     if (gameOver || !gameActive) return;
-    e.preventDefault(); // Empêche la page de scroller avec les flèches
+
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+    }
 
     if (isLocalMode) {
-        // En local, un seul PC gère tout
         handleInput(e.key, e.code, true);
     } else {
         if (isHost) {
-            // L'hôte en ligne ne lit strictement QUE ses propres touches (Joueur 1)
-            const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
+            const p1Codes = ['KeyA', 'KeyD', 'KeyQ', 'KeyW', 'KeyZ', 'KeyS', 'KeyF', 'KeyG', 'KeyE'];
             if (p1Codes.includes(e.code)) handleInput(e.key, e.code, true);
         } else if (conn) {
-            // Le client en ligne n'envoie strictement QUE les flèches/contrôles du Joueur 2
-            const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
-            if (p2Codes.includes(e.code)) {
-                conn.send({ type: 'keydown', key: e.key, code: e.code });
+            if (clientToHostMap[e.code]) {
+                const translatedCode = clientToHostMap[e.code];
+                conn.send({ type: 'keydown', key: e.key, code: translatedCode });
             }
         }
     }
@@ -716,20 +766,19 @@ window.addEventListener('keyup', (e) => {
         handleInput(e.key, e.code, false);
     } else {
         if (isHost) {
-            const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
+            const p1Codes = ['KeyA', 'KeyD', 'KeyQ', 'KeyW', 'KeyZ', 'KeyS', 'KeyF', 'KeyG', 'KeyE'];
             if (p1Codes.includes(e.code)) handleInput(e.key, e.code, false);
         } else if (conn) {
-            const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
-            if (p2Codes.includes(e.code)) {
-                conn.send({ type: 'keyup', key: e.key, code: e.code });
+            if (clientToHostMap[e.code]) {
+                const translatedCode = clientToHostMap[e.code];
+                conn.send({ type: 'keyup', key: e.key, code: translatedCode });
             }
         }
     }
 });
 
-// Le moteur ne change pas. Il croit recevoir des flèches directionnelles de P2 !
 function handleInput(keyString, codeString, isKeyDown) {
-    const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
+    const p1Codes = ['KeyA', 'KeyD', 'KeyQ', 'KeyW', 'KeyZ', 'KeyS', 'KeyF', 'KeyG', 'KeyE'];
     if (p1Codes.includes(codeString)) {
         const canP1Act = !player1.isStunned && !player1.isKO;
         if (isKeyDown && canP1Act) {
@@ -750,7 +799,7 @@ function handleInput(keyString, codeString, isKeyDown) {
         }
     }
 
-    const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
+    const p2Codes = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ShiftRight', 'ControlRight', 'Enter', 'NumpadEnter'];
     if (p2Codes.includes(codeString)) {
         const canP2Act = !player2.isStunned && !player2.isKO;
         if (isKeyDown && canP2Act) {
