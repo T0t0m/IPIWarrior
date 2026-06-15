@@ -23,6 +23,66 @@ h1 {
     letter-spacing: 2px;
 }
 
+/* --- Nouvelle disposition Arcade (Panneaux latéraux) --- */
+.game-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    width: 100%;
+    max-width: 1500px;
+}
+
+.side-controls {
+    background: linear-gradient(to bottom, #222, #111);
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #444;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    min-width: 170px;
+    text-align: center;
+}
+
+.side-controls h3 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px currentColor;
+}
+
+.control-box p {
+    background: #1a1a24;
+    padding: 12px 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+    font-size: 14px;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+.control-box p:last-child {
+    margin-bottom: 0;
+}
+
+.control-box p strong {
+    color: #fff;
+    font-size: 16px;
+    display: inline-block;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.p1-color {
+    color: #ff3377;
+}
+
+.p2-color {
+    color: #33ccff;
+}
+
+/* --- Écran de jeu principal --- */
 #game-container {
     position: relative;
     width: 1024px;
@@ -130,7 +190,7 @@ h1 {
     background-color: #eee;
 }
 
-/* UI Overlay */
+/* UI Overlay (Health Bars & Timer) */
 #ui {
     position: absolute;
     top: 0;
@@ -190,6 +250,7 @@ h1 {
     transform: skewX(-5deg);
 }
 
+/* Game Over / Restart Screen */
 #display-text {
     position: absolute;
     top: 0;
@@ -219,31 +280,10 @@ h1 {
     border: none;
     cursor: pointer;
     border-radius: 5px;
+    pointer-events: auto;
+    /* Ensure button is clickable */
 }
 
 #restart-btn:hover {
     background-color: #00aacc;
-}
-
-#controls-guide {
-    margin-top: 15px;
-    display: flex;
-    justify-content: space-between;
-    width: 1024px;
-    background: #222;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: 1px solid #444;
-}
-
-.control-column {
-    width: 48%;
-}
-
-.p1-color {
-    color: #ff3377;
-}
-
-.p2-color {
-    color: #33ccff;
 }
