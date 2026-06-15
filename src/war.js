@@ -4,7 +4,7 @@ canvas.width = 1024;
 canvas.height = 576;
 
 const gravity = 0.7;
-const groundY = 480;
+const groundY = 540;
 
 let p1Choice = '../asset/character/fx.png';
 let p2Choice = '../asset/character/kotlineur.png';
@@ -637,8 +637,6 @@ function animate() {
         ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    ctx.fillStyle = '#111116'; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, groundY, canvas.width, 4);
 
     player1.update(); player2.update();
 
