@@ -1,0 +1,249 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #1a1a1a;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #fff;
+    overflow: hidden;
+}
+
+h1 {
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #00d2ff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#game-container {
+    position: relative;
+    width: 1024px;
+    height: 576px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    border: 4px solid #333;
+    background: linear-gradient(to bottom, #2a2a35 0%, #1a1a24 100%);
+}
+
+/* Character Select Menu Overlay */
+#character-select {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+#character-select h2 {
+    font-size: 48px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 15px #fff;
+}
+
+.selection-area {
+    display: flex;
+    width: 80%;
+    justify-content: space-around;
+    margin-bottom: 40px;
+}
+
+.player-select {
+    text-align: center;
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #444;
+}
+
+.player-select h3 {
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.portrait-container {
+    display: flex;
+    gap: 15px;
+}
+
+.portrait {
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    border: 4px solid transparent;
+    border-radius: 10px;
+    background: #333;
+    object-fit: cover;
+    transition: transform 0.1s;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    text-align: center;
+}
+
+.portrait:hover {
+    transform: scale(1.1);
+}
+
+.selected-p1 {
+    border-color: #ff0055;
+    box-shadow: 0 0 15px #ff0055;
+    background-color: #550011;
+}
+
+.selected-p2 {
+    border-color: #00d2ff;
+    box-shadow: 0 0 15px #00d2ff;
+    background-color: #002233;
+}
+
+#start-fight-btn {
+    padding: 15px 40px;
+    font-family: inherit;
+    font-size: 32px;
+    font-weight: bold;
+    background-color: #fff;
+    color: #000;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 0 20px #fff;
+    transition: all 0.2s;
+}
+
+#start-fight-btn:hover {
+    transform: scale(1.05);
+    background-color: #eee;
+}
+
+/* UI Overlay */
+#ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: none;
+    /* Hidden until game starts */
+    align-items: center;
+    padding: 20px;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.health-bar-container {
+    position: relative;
+    width: 40%;
+    height: 30px;
+    background-color: #444;
+    border: 2px solid #fff;
+}
+
+#p1-health-container {
+    transform: skewX(-10deg);
+}
+
+#p2-health-container {
+    transform: skewX(10deg);
+}
+
+.health-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    transition: width 0.1s ease-out;
+}
+
+#p1-health {
+    right: 0;
+    background: linear-gradient(90deg, #ff0055, #ff5500);
+}
+
+#p2-health {
+    left: 0;
+    background: linear-gradient(90deg, #00d2ff, #0066ff);
+}
+
+#timer {
+    background-color: #000;
+    border: 2px solid #fff;
+    font-size: 32px;
+    font-weight: bold;
+    padding: 5px 15px;
+    width: 70px;
+    text-align: center;
+    transform: skewX(-5deg);
+}
+
+#display-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    font-weight: bold;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 20px #000;
+    flex-direction: column;
+    z-index: 8;
+}
+
+#restart-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 20px;
+    background-color: #00d2ff;
+    color: #000;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#restart-btn:hover {
+    background-color: #00aacc;
+}
+
+#controls-guide {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    width: 1024px;
+    background: #222;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+.control-column {
+    width: 48%;
+}
+
+.p1-color {
+    color: #ff3377;
+}
+
+.p2-color {
+    color: #33ccff;
+}
