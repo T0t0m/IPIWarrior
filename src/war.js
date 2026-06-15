@@ -48,9 +48,10 @@ class Fighter {
         this.isAttacking = false;
         this.attackType = null;
         this.attackTimer = 0;
+        this.cooldown = 0; // Temps de récupération avant la prochaine attaque
         this.headImage = new Image();
 
-        // NOUVEAU : Zone d'attaque circulaire
+        // Zone d'attaque circulaire
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
             radius: 25
@@ -58,7 +59,7 @@ class Fighter {
     }
 
     setHead(imageSrc) {
-        // CORRECTION : Chemin du dossier ajouté ici
+        // Chemin du dossier des images
         this.headImage.src = '../asset/character/' + imageSrc;
     }
 
@@ -119,7 +120,7 @@ class Fighter {
         }
         ctx.stroke();
 
-        // NOUVEAU : Visuel de l'Attack Box en cercle
+        // Visuel de l'Attack Box en cercle
         if (this.isAttacking) {
             ctx.fillStyle = this.attackType === 'punch' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 215, 0, 0.3)';
             ctx.beginPath();
@@ -131,7 +132,7 @@ class Fighter {
     update() {
         this.draw();
 
-        // NOUVEAU : Position et taille des cercles d'attaque
+        // Position et taille des cercles d'attaque selon le type de coup
         if (this.attackType === 'punch') {
             this.attackBox.radius = 25;
             this.attackBox.position.y = this.position.y + 50;
@@ -161,6 +162,12 @@ class Fighter {
         if (this.position.x < 0) this.position.x = 0;
         if (this.position.x + this.width > canvas.width) this.position.x = canvas.width - this.width;
 
+        // Gestion du temps de récupération (cooldown)
+        if (this.cooldown > 0) {
+            this.cooldown--;
+        }
+
+        // Gestion de la durée de l'attaque affichée à l'écran
         if (this.isAttacking) {
             this.attackTimer--;
             if (this.attackTimer <= 0) {
@@ -171,10 +178,21 @@ class Fighter {
     }
 
     attack(type) {
-        if (this.isAttacking) return;
+        // Bloque l'attaque si le joueur attaque déjà ou s'il est en période de récupération
+        if (this.isAttacking || this.cooldown > 0) return;
+
         this.isAttacking = true;
         this.attackType = type;
-        this.attackTimer = 12;
+
+        // Configuration des vitesses d'attaque (Poing = 1x, Pied = 2.5x plus lent)
+        if (type === 'punch') {
+            this.attackTimer = 10; // Durée visuelle du coup
+            this.cooldown = 20;    // Temps de pause avant le prochain coup
+        } else if (type === 'kick') {
+            this.attackTimer = 25; // 2.5x plus long
+            this.cooldown = 50;    // 2.5x plus long
+        }
+
         checkHit(this, this === player1 ? player2 : player1);
     }
 }
@@ -193,7 +211,7 @@ const player2 = new Fighter({
     side: 'right'
 });
 
-// NOUVEAU : Fonction mathématique pour calculer la collision Cercle/Rectangle
+// Fonction mathématique pour calculer la collision Cercle/Rectangle
 function circleRectCollision(circle, rect) {
     let testX = circle.position.x;
     let testY = circle.position.y;
@@ -212,7 +230,7 @@ function circleRectCollision(circle, rect) {
 }
 
 function checkHit(attacker, defender) {
-    // NOUVEAU : Utilisation de la nouvelle fonction de collision
+    // Utilisation de la collision Cercle/Rectangle
     if (circleRectCollision(attacker.attackBox, defender)) {
         const damage = attacker.attackType === 'punch' ? 7 : 12;
         defender.health -= damage;
@@ -260,19 +278,22 @@ function determineWinner() {
 }
 
 function startGame() {
-    // Apply selected heads
     player1.setHead(p1Choice);
     player2.setHead(p2Choice);
 
-    // UI Switches
     document.getElementById('character-select').style.display = 'none';
     document.getElementById('ui').style.display = 'flex';
 
-    // Reset state
     player1.health = 100;
     player1.position = { x: 150, y: 0 };
+    player1.cooldown = 0;
+    player1.isAttacking = false;
+
     player2.health = 100;
     player2.position = { x: 800, y: 0 };
+    player2.cooldown = 0;
+    player2.isAttacking = false;
+
     document.getElementById('p1-health').style.width = '100%';
     document.getElementById('p2-health').style.width = '100%';
 
@@ -298,7 +319,7 @@ function returnToMenu() {
 function animate() {
     if (!gameActive) {
         animationId = window.requestAnimationFrame(animate);
-        return; // Pause rendering if in menu
+        return; 
     }
     animationId = window.requestAnimationFrame(animate);
 
@@ -339,6 +360,7 @@ window.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
 
     switch (key) {
+        // Joueur 1 (Support AZERTY/QWERTY combiné)
         case 'd': 
             keys.d.pressed = true; 
             break;
@@ -357,6 +379,7 @@ window.addEventListener('keydown', (event) => {
             player1.attack('kick'); 
             break;
 
+        // Joueur 2
         case 'arrowright': 
             keys.ArrowRight.pressed = true; 
             break;
