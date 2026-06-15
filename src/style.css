@@ -13,7 +13,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     color: #fff;
-    overflow: hidden;
+    overflow-x: hidden; /* Empêche le défilement horizontal */
 }
 
 h1 {
@@ -32,6 +32,8 @@ h1 {
     gap: 30px;
     width: 100%;
     max-width: 1500px;
+    flex-wrap: wrap; /* Permet aux panneaux de passer à la ligne sur petit écran */
+    padding: 20px;   /* Évite que le jeu touche les bords de l'écran */
 }
 
 .side-controls {
@@ -85,16 +87,20 @@ h1 {
 /* --- Écran de jeu principal --- */
 #game-container {
     position: relative;
-    box-sizing: content-box;
-    width: 1024px;
-    height: 576px;
+    box-sizing: content-box; /* La bordure s'ajoute à l'extérieur */
+    width: 100%;             /* Le cadre prend toute la largeur dispo... */
+    max-width: 1024px;       /* ... mais pas plus que 1024px */
+    height: auto;            /* S'adapte proportionnellement */
+    aspect-ratio: 1024 / 576;/* Garde les proportions 16:9 parfaites */
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
     border: 4px solid #333;
     background: linear-gradient(to bottom, #2a2a35 0%, #1a1a24 100%);
 }
 
 canvas {
-    display: block;
+    display: block; /* Supprime la marge invisible en dessous du jeu */
+    width: 100%;    /* Le canvas étire son rendu visuel dans le conteneur */
+    height: 100%;
 }
 
 /* Character Select Menu Overlay */
@@ -141,9 +147,9 @@ canvas {
 .portrait-container {
     display: flex;
     gap: 15px;
-    flex-wrap: wrap; /* Permet le retour à la ligne */
+    flex-wrap: wrap;
     justify-content: center;
-    max-width: 280px; /* Force la grille sur deux lignes */
+    max-width: 280px;
     margin: 0 auto;
 }
 
@@ -207,7 +213,6 @@ canvas {
     width: 100%;
     display: none;
     align-items: flex-start;
-    /* Aligné vers le haut pour les noms */
     padding: 20px;
     justify-content: space-between;
     pointer-events: none;
@@ -313,4 +318,73 @@ canvas {
 
 #restart-btn:hover {
     background-color: #00aacc;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN (Tablettes & Portables)
+   ========================================= */
+
+@media (max-width: 1150px) {
+    #display-text {
+        font-size: 48px;
+    }
+    
+    #character-select h2 {
+        font-size: 32px;
+        margin-bottom: 15px;
+    }
+    
+    .portrait {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .portrait-container {
+        max-width: 220px;
+    }
+
+    #start-fight-btn {
+        font-size: 24px;
+        padding: 10px 20px;
+    }
+
+    .health-bar-container {
+        height: 20px;
+    }
+
+    #timer {
+        font-size: 24px;
+        width: 50px;
+        padding: 3px 10px;
+    }
+
+    .char-name {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 850px) {
+    .side-controls {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .side-controls h3 {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .control-box {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .control-box p {
+        margin-bottom: 0;
+    }
 }
