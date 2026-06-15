@@ -24,36 +24,13 @@ h1 {
 }
 
 /* Palettes de couleurs pures */
-@font-palette-values --p1-palette {
-    font-family: 'Sixtyfour Convergence';
-    override-colors: 0 #ff0000, 1 #ff0000, 2 #ff0000, 3 #ff0000, 4 #ff0000, 5 #ff0000, 6 #ff0000, 7 #ff0000;
-}
+@font-palette-values --p1-palette { font-family: 'Sixtyfour Convergence'; override-colors: 0 #ff0000, 1 #ff0000, 2 #ff0000, 3 #ff0000, 4 #ff0000, 5 #ff0000, 6 #ff0000, 7 #ff0000; }
+@font-palette-values --p2-palette { font-family: 'Sixtyfour Convergence'; override-colors: 0 #0000ff, 1 #0000ff, 2 #0000ff, 3 #0000ff, 4 #0000ff, 5 #0000ff, 6 #0000ff, 7 #0000ff; }
+@font-palette-values --white-palette { font-family: 'Sixtyfour Convergence'; override-colors: 0 #ffffff, 1 #ffffff, 2 #ffffff, 3 #ffffff, 4 #ffffff, 5 #ffffff, 6 #ffffff, 7 #ffffff; }
 
-@font-palette-values --p2-palette {
-    font-family: 'Sixtyfour Convergence';
-    override-colors: 0 #0000ff, 1 #0000ff, 2 #0000ff, 3 #0000ff, 4 #0000ff, 5 #0000ff, 6 #0000ff, 7 #0000ff;
-}
-
-@font-palette-values --white-palette {
-    font-family: 'Sixtyfour Convergence';
-    override-colors: 0 #ffffff, 1 #ffffff, 2 #ffffff, 3 #ffffff, 4 #ffffff, 5 #ffffff, 6 #ffffff, 7 #ffffff;
-}
-
-/* Application des palettes */
-.p1-color {
-    color: #ff0000 !important;
-    font-palette: --p1-palette !important;
-}
-
-.p2-color {
-    color: #0000ff !important;
-    font-palette: --p2-palette !important;
-}
-
-.white-color {
-    color: #ffffff !important;
-    font-palette: --white-palette !important;
-}
+.p1-color { color: #ff0000 !important; font-palette: --p1-palette !important; }
+.p2-color { color: #0000ff !important; font-palette: --p2-palette !important; }
+.white-color { color: #ffffff !important; font-palette: --white-palette !important; }
 
 /* --- Disposition Arcade (Panneaux latéraux de retour) --- */
 .game-wrapper {
@@ -85,10 +62,7 @@ h1 {
     line-height: 1.5;
 }
 
-.side-controls small {
-    font-size: 10px;
-    color: #aaa;
-}
+.side-controls small { font-size: 10px; color: #aaa; }
 
 .control-box p {
     background: #1a1a24;
@@ -101,10 +75,7 @@ h1 {
     line-height: 1.4;
 }
 
-.control-box p:last-child {
-    margin-bottom: 0;
-}
-
+.control-box p:last-child { margin-bottom: 0; }
 .control-box p strong {
     font-size: 14px;
     display: inline-block;
@@ -113,15 +84,8 @@ h1 {
     letter-spacing: 1px;
 }
 
-.game-wrapper>.side-controls:first-child p strong {
-    color: #ff0000 !important;
-    font-palette: --p1-palette !important;
-}
-
-.game-wrapper>.side-controls:last-child p strong {
-    color: #0000ff !important;
-    font-palette: --p2-palette !important;
-}
+.game-wrapper>.side-controls:first-child p strong { color: #ff0000 !important; font-palette: --p1-palette !important; }
+.game-wrapper>.side-controls:last-child p strong { color: #0000ff !important; font-palette: --p2-palette !important; }
 
 /* --- Écran de jeu principal --- */
 #game-container {
@@ -137,509 +101,190 @@ h1 {
     image-rendering: pixelated;
 }
 
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
+canvas { display: block; width: 100%; height: 100%; }
 
-/* Overlays HTML pour les textes d'ulti */
 .ulti-text-overlay {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 9.5%;
-    background-color: rgba(0, 0, 0, 0.75);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 4vh;
-    z-index: 6;
-    text-shadow: 2px 2px 0 #000;
+    position: absolute; left: 0; width: 100%; height: 9.5%; background-color: rgba(0, 0, 0, 0.75);
+    display: none; align-items: center; justify-content: center; font-size: 4vh; z-index: 6; text-shadow: 2px 2px 0 #000;
 }
-
-#p1-ulti-text {
-    top: 28%;
-}
-
-#p2-ulti-text {
-    top: 42%;
-}
+#p1-ulti-text { top: 28%; }
+#p2-ulti-text { top: 42%; }
 
 /* --- Menu Principal --- */
 #main-menu {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.95);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; z-index: 30;
+}
+#main-menu h2 { font-size: 48px; text-shadow: 4px 4px 0 #000; text-align: center; }
+
+.menu-btn {
+    font-family: inherit; font-size: 20px; padding: 15px 30px; cursor: pointer;
+    background: #222; color: #fff; border: 4px solid #fff; transition: all 0.2s; text-transform: uppercase;
+}
+.menu-btn:hover { background: #fff; color: #000; transform: scale(1.05); }
+
+/* --- Menu de Sélection des Combattants (Le Tableau de Classe) --- */
+#character-select {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
+    top: 0; left: 0; width: 100%; height: 100%;
+    /* Remplace par le background classroom */
+    background: url('../asset/menu/menu-classroom.png') no-repeat center center;
+    background-size: cover;
+    z-index: 10;
+    /* On gère l'affichage interne via la board-area */
+}
+
+/* Zone correspondant exactement au tableau vert dans l'image (en pourcentages) */
+.board-area {
+    position: absolute;
+    top: 20%;
+    left: 31%;
+    width: 44.5%;
+    height: 26.5%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3vh;
-    z-index: 30;
-}
-
-#main-menu h2 {
-    font-size: 48px;
-    text-shadow: 4px 4px 0 #000;
-    text-align: center;
-}
-
-.menu-btn {
-    font-family: inherit;
-    font-size: 20px;
-    padding: 15px 30px;
-    cursor: pointer;
-    background: #222;
-    color: #fff;
-    border: 4px solid #fff;
-    transition: all 0.2s;
-    text-transform: uppercase;
-}
-
-.menu-btn:hover {
-    background: #fff;
-    color: #000;
-    transform: scale(1.05);
-}
-
-/* --- Menu de Sélection des Combattants --- */
-#character-select {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    padding: 2vh 0;
-    z-index: 10;
+    padding: 5px;
     overflow: hidden;
 }
 
-#character-select h2 {
-    font-size: 24px;
-    text-shadow: 4px 4px 0px #000;
-    margin: 0;
+.step-container {
+    display: none; /* Block basculé en flex via JS */
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+    height: 100%;
 }
 
-.selection-area {
-    display: flex;
-    width: 90%;
-    justify-content: space-around;
-    margin: 0;
-}
-
-.player-select {
-    text-align: center;
-    background: #222;
-    padding: 15px;
-    border: 4px solid #444;
-}
-
-.player-select h3 {
-    margin-bottom: 15px;
+.step-container h2 {
     font-size: 16px;
+    text-shadow: 2px 2px 0px #000;
+    margin: 0;
+    text-align: center;
 }
 
-.portrait-container {
+.portrait-container, .bg-container {
     display: flex;
-    gap: 15px;
+    gap: 8px;
     flex-wrap: wrap;
     justify-content: center;
-    max-width: 280px;
-    margin: 0 auto;
 }
 
+/* On réduit la taille des portraits pour rentrer dans le tableau */
 .portrait {
-    width: 80px;
-    height: 80px;
+    width: 50px;
+    height: 50px;
     cursor: pointer;
-    border: 4px solid transparent;
+    border: 3px solid transparent;
     background: #333;
     object-fit: cover;
     transition: transform 0.1s;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    text-align: center;
     image-rendering: pixelated;
 }
+.portrait:hover { transform: scale(1.1); }
+.selected-p1 { border-color: #ff0000; box-shadow: 2px 2px 0px #ff0000; background-color: #550000; }
+.selected-p2 { border-color: #0000ff; box-shadow: 2px 2px 0px #0000ff; background-color: #000044; }
 
-.portrait:hover {
-    transform: scale(1.1);
-}
-
-.selected-p1 {
-    border-color: #ff0000;
-    box-shadow: 4px 4px 0px #ff0000;
-    background-color: #550000;
-}
-
-.selected-p2 {
-    border-color: #0000ff;
-    box-shadow: 4px 4px 0px #0000ff;
-    background-color: #000044;
-}
-
-#start-fight-btn {
-    padding: 15px 40px;
-    font-family: inherit;
-    font-size: 24px;
-    background-color: #fff;
-    color: #000;
-    border: 4px solid #000;
+.bg-portrait {
+    width: 65px;
+    height: 40px;
     cursor: pointer;
-    box-shadow: 4px 4px 0 #fff;
-    transition: all 0.2s;
-    flex-shrink: 0;
+    border: 3px solid transparent;
+    background: #333;
+    object-fit: cover;
+    transition: transform 0.1s;
+    image-rendering: pixelated;
 }
+.bg-portrait:hover { transform: scale(1.05); }
+.selected-bg { border-color: #00ff66; box-shadow: 2px 2px 0 #00ff66; }
 
-#start-fight-btn:hover {
-    transform: scale(1.05);
-    background-color: #eee;
-}
-
-/* UI Overlay (Health Bars & Timer) */
-#ui {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    display: none;
-    align-items: flex-start;
-    padding: 20px;
-    justify-content: space-between;
-    pointer-events: none;
-    z-index: 5;
-}
-
-.player-ui {
-    width: 40%;
+.step-actions {
     display: flex;
-    flex-direction: column;
-}
-
-.p2-ui {
-    align-items: flex-end;
-}
-
-.health-bar-container {
-    position: relative;
-    width: 100%;
-    height: 30px;
-    background-color: #444;
-    border: 4px solid #fff;
-}
-
-.health-bar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    transition: width 0.1s ease-out;
-}
-
-#p1-health {
-    right: 0;
-    background: #ff0000;
-}
-
-#p2-health {
-    left: 0;
-    background: #0000ff;
-}
-
-/* --- Barres d'Ultimate --- */
-.ulti-bar-container {
-    position: relative;
-    width: 90%;
-    height: 15px;
-    background-color: #222;
-    border: 2px solid #fff;
+    gap: 15px;
     margin-top: 5px;
 }
 
-.ulti-bar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 0%;
-    transition: width 0.1s linear;
-}
-
-#p1-ulti {
-    right: 0;
-    background: #ffcc00;
-}
-
-#p2-ulti {
-    left: 0;
-    background: #ffcc00;
-}
-
-.char-name {
-    margin-top: 8px;
-    font-size: 16px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 0 #000;
-}
-
-#timer {
-    background-color: #000;
-    border: 4px solid #fff;
-    font-size: 24px;
+.step-btn {
     padding: 5px 15px;
-    width: 80px;
-    text-align: center;
+    font-family: inherit;
+    font-size: 12px;
+    background-color: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
 }
+.step-btn:hover { background-color: #fff; color: #000; }
+
+#start-fight-btn { background-color: #fff; color: #000; border-color: #000; font-weight: bold; }
+#start-fight-btn:hover { background-color: #ccc; }
+
+
+/* UI Overlay (Health Bars & Timer) */
+#ui {
+    position: absolute; top: 0; left: 0; width: 100%; display: none; align-items: flex-start;
+    padding: 20px; justify-content: space-between; pointer-events: none; z-index: 5;
+}
+.player-ui { width: 40%; display: flex; flex-direction: column; }
+.p2-ui { align-items: flex-end; }
+.health-bar-container { position: relative; width: 100%; height: 30px; background-color: #444; border: 4px solid #fff; }
+.health-bar { position: absolute; top: 0; bottom: 0; width: 100%; transition: width 0.1s ease-out; }
+#p1-health { right: 0; background: #ff0000; }
+#p2-health { left: 0; background: #0000ff; }
+.ulti-bar-container { position: relative; width: 90%; height: 15px; background-color: #222; border: 2px solid #fff; margin-top: 5px; }
+.ulti-bar { position: absolute; top: 0; bottom: 0; width: 0%; transition: width 0.1s linear; }
+#p1-ulti { right: 0; background: #ffcc00; }
+#p2-ulti { left: 0; background: #ffcc00; }
+.char-name { margin-top: 8px; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 0 #000; }
+#timer { background-color: #000; border: 4px solid #fff; font-size: 24px; padding: 5px 15px; width: 80px; text-align: center; }
 
 /* Game Over / Restart Screen */
 #display-text {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 3vh;
-    font-size: 32px;
-    background-color: rgba(0, 0, 0, 0.8);
-    text-shadow: 4px 4px 0 #000;
-    flex-direction: column;
-    z-index: 8;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center;
+    justify-content: center; gap: 3vh; font-size: 32px; background-color: rgba(0, 0, 0, 0.8);
+    text-shadow: 4px 4px 0 #000; flex-direction: column; z-index: 8;
 }
-
 #restart-btn {
-    padding: 10px 20px;
-    font-family: inherit;
-    font-size: 16px;
-    background-color: #222;
-    border: 4px solid #fff;
-    cursor: pointer;
-    pointer-events: auto;
-    text-transform: uppercase;
+    padding: 10px 20px; font-family: inherit; font-size: 16px; background-color: #222;
+    border: 4px solid #fff; cursor: pointer; pointer-events: auto; text-transform: uppercase;
 }
-
-#restart-btn:hover {
-    background-color: #fff;
-    color: #000;
-}
-
-/* --- Sélection du Stage (Background) --- */
-.stage-select {
-    text-align: center;
-    margin: 0;
-}
-
-.stage-select h3 {
-    font-size: 16px;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 0 #000;
-}
-
-.bg-container {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-.bg-portrait {
-    width: 140px;
-    height: 80px;
-    cursor: pointer;
-    border: 4px solid transparent;
-    background: #333;
-    object-fit: cover;
-    transition: transform 0.1s;
-    image-rendering: pixelated;
-}
-
-.bg-portrait:hover {
-    transform: scale(1.05);
-}
-
-.selected-bg {
-    border-color: #00ff66;
-    box-shadow: 4px 4px 0 #00ff66;
-}
+#restart-btn:hover { background-color: #fff; color: #000; }
 
 /* --- Menu Réseau --- */
 #network-menu {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5vh;
-    z-index: 20;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.95);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5vh; z-index: 20;
 }
+#network-menu h2 { font-size: 32px; text-shadow: 4px 4px 0 #000; margin: 0; }
+.net-actions { display: flex; flex-direction: row; gap: 40px; width: 80%; justify-content: center; }
+.net-box { background: #222; padding: 30px; border: 4px solid #444; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.net-box h3 { font-size: 20px; margin-bottom: 20px; color: #fff; }
+.net-box input { width: 100%; max-width: 250px; padding: 10px; margin-bottom: 20px; background: #111; border: 2px solid #555; color: #fff; font-family: inherit; font-size: 14px; text-align: center; }
+.net-box button { padding: 12px 25px; font-size: 16px; font-family: inherit; cursor: pointer; background: #222; border: 4px solid #fff; color: #fff; transition: 0.2s; }
+.net-box button:hover { background: #fff; color: #000; transform: scale(1.05); }
+#room-id-display { margin-top: 20px; font-size: 18px; color: #00ff66; }
+#join-status { margin-top: 15px; color: #ff3377; }
 
-#network-menu h2 {
-    font-size: 32px;
-    text-shadow: 4px 4px 0 #000;
-    margin: 0;
-}
-
-.net-actions {
-    display: flex;
-    flex-direction: row;
-    gap: 40px;
-    width: 80%;
-    justify-content: center;
-}
-
-.net-box {
-    background: #222;
-    padding: 30px;
-    border: 4px solid #444;
-    text-align: center;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.net-box h3 {
-    font-size: 20px;
-    margin-bottom: 20px;
-    color: #fff;
-}
-
-.net-box input {
-    width: 100%;
-    max-width: 250px;
-    padding: 10px;
-    margin-bottom: 20px;
-    background: #111;
-    border: 2px solid #555;
-    color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    text-align: center;
-}
-
-.net-box button {
-    padding: 12px 25px;
-    font-size: 16px;
-    font-family: inherit;
-    cursor: pointer;
-    background: #222;
-    border: 4px solid #fff;
-    color: #fff;
-    transition: 0.2s;
-}
-
-.net-box button:hover {
-    background: #fff;
-    color: #000;
-    transform: scale(1.05);
-}
-
-#room-id-display {
-    margin-top: 20px;
-    font-size: 18px;
-    color: #00ff66;
-}
-
-#join-status {
-    margin-top: 15px;
-    color: #ff3377;
-}
-
-/* =========================================
-   RESPONSIVE DESIGN (Tablettes & Portables)
-   ========================================= */
+/* Responsive */
 @media (max-width: 1150px) {
-    #main-menu h2 {
-        font-size: 32px;
-    }
-
-    .menu-btn {
-        font-size: 16px;
-    }
-
-    #display-text {
-        font-size: 24px;
-    }
-
-    #character-select h2 {
-        font-size: 20px;
-    }
-
-    .portrait {
-        width: 60px;
-        height: 60px;
-    }
-
-    #start-fight-btn {
-        font-size: 18px;
-        padding: 10px 20px;
-    }
-
-    #timer {
-        font-size: 16px;
-        width: 60px;
-        padding: 3px 10px;
-    }
-
-    .char-name {
-        font-size: 12px;
-    }
-
-    .bg-portrait {
-        width: 100px;
-        height: 60px;
-    }
+    #main-menu h2 { font-size: 32px; }
+    .menu-btn { font-size: 16px; }
+    #display-text { font-size: 24px; }
+    .step-container h2 { font-size: 14px; }
+    .portrait { width: 40px; height: 40px; }
+    .bg-portrait { width: 50px; height: 30px; }
+    #timer { font-size: 16px; width: 60px; padding: 3px 10px; }
+    .char-name { font-size: 12px; }
 }
 
 @media (max-width: 850px) {
-    .side-controls {
-        width: 100%;
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-    }
-
-    .side-controls h3 {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
-    .control-box {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .control-box p {
-        margin-bottom: 0;
-    }
-
-    .net-actions {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .net-box {
-        padding: 15px;
-    }
+    .side-controls { width: 100%; display: flex; justify-content: space-around; flex-wrap: wrap; }
+    .side-controls h3 { width: 100%; margin-bottom: 10px; }
+    .control-box { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .control-box p { margin-bottom: 0; }
+    .net-actions { flex-direction: column; gap: 20px; }
+    .net-box { padding: 15px; }
 }

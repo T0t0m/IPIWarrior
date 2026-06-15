@@ -12,6 +12,7 @@ let bgChoice = '../asset/backgrounds/ipi.png';
 const bgImage = new Image();
 let gameActive = false;
 let isLocalMode = false;
+let currentMenuStep = 1;
 
 const keys = {
     // P1
@@ -32,8 +33,8 @@ function startLocal() {
     isLocalMode = true;
     isHost = true;
     document.getElementById('main-menu').style.display = 'none';
-    document.getElementById('character-select').style.display = 'flex';
-    document.getElementById('start-fight-btn').style.display = 'block';
+    document.getElementById('character-select').style.display = 'block';
+    goToStep(1);
 }
 
 function showNetworkMenu() {
@@ -60,8 +61,8 @@ function hostGame() {
         conn = connection;
         setupConnection();
         document.getElementById('network-menu').style.display = 'none';
-        document.getElementById('character-select').style.display = 'flex';
-        document.getElementById('start-fight-btn').style.display = 'block';
+        document.getElementById('character-select').style.display = 'block';
+        goToStep(1);
     });
 }
 
@@ -78,15 +79,17 @@ function joinGame() {
 
         conn.on('open', () => {
             document.getElementById('network-menu').style.display = 'none';
-            document.getElementById('character-select').style.display = 'flex';
-            document.getElementById('waiting-host-msg').style.display = 'block';
+            document.getElementById('character-select').style.display = 'block';
+            goToStep(1);
         });
     });
 }
 
 function setupConnection() {
     conn.on('data', (data) => {
-        if (data.type === 'charSelect') {
+        if (data.type === 'setStep') {
+            goToStep(data.step);
+        } else if (data.type === 'charSelect') {
             selectChar(data.playerNum, data.imageSrc, data.elementId);
         } else if (data.type === 'bgSelect') {
             selectBg(data.imageSrc, data.elementId);
@@ -102,6 +105,36 @@ function setupConnection() {
             returnToMenu();
         }
     });
+}
+
+// --- Menu de Sélection (Etapes) ---
+function goToStep(step) {
+    currentMenuStep = step;
+    document.querySelectorAll('.step-container').forEach(el => el.style.display = 'none');
+    document.getElementById('step-' + step).style.display = 'flex';
+
+    // Si c'est un client en ligne, cacher le bouton démarrer
+    if (step === 3 && !isHost && !isLocalMode) {
+        document.getElementById('start-fight-btn').style.display = 'none';
+        document.getElementById('waiting-host-msg').style.display = 'block';
+    } else if (step === 3) {
+        document.getElementById('start-fight-btn').style.display = 'block';
+        document.getElementById('waiting-host-msg').style.display = 'none';
+    }
+}
+
+function nextStep() {
+    if (currentMenuStep < 3) {
+        goToStep(currentMenuStep + 1);
+        if (conn && !isLocalMode) conn.send({ type: 'setStep', step: currentMenuStep });
+    }
+}
+
+function prevStep() {
+    if (currentMenuStep > 1) {
+        goToStep(currentMenuStep - 1);
+        if (conn && !isLocalMode) conn.send({ type: 'setStep', step: currentMenuStep });
+    }
 }
 
 function handleCharSelect(playerNum, imageSrc, elementId) {
@@ -130,18 +163,18 @@ function handleStartGame() {
 function selectChar(playerNum, imageSrc, elementId) {
     if (playerNum === 1) {
         p1Choice = imageSrc;
-        document.querySelectorAll('#p1-selection .portrait').forEach(p => p.classList.remove('selected-p1'));
+        document.querySelectorAll('#step-1 .portrait').forEach(p => p.classList.remove('selected-p1'));
         document.getElementById(elementId).classList.add('selected-p1');
     } else {
         p2Choice = imageSrc;
-        document.querySelectorAll('#p2-selection .portrait').forEach(p => p.classList.remove('selected-p2'));
+        document.querySelectorAll('#step-2 .portrait').forEach(p => p.classList.remove('selected-p2'));
         document.getElementById(elementId).classList.add('selected-p2');
     }
 }
 
 function selectBg(imageSrc, elementId) {
     bgChoice = imageSrc;
-    document.querySelectorAll('.stage-select .bg-portrait').forEach(bg => bg.classList.remove('selected-bg'));
+    document.querySelectorAll('.bg-portrait').forEach(bg => bg.classList.remove('selected-bg'));
     document.getElementById(elementId).classList.add('selected-bg');
 }
 
@@ -584,7 +617,8 @@ function returnToMenu() {
     resetAllKeys();
     document.getElementById('display-text').style.display = 'none';
     document.getElementById('ui').style.display = 'none';
-    document.getElementById('character-select').style.display = 'flex';
+    document.getElementById('character-select').style.display = 'block';
+    goToStep(1);
 }
 
 let animationId;
