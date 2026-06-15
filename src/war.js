@@ -50,15 +50,16 @@ class Fighter {
         this.attackTimer = 0;
         this.headImage = new Image();
 
+        // NOUVEAU : Zone d'attaque circulaire
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
-            width: 100,
-            height: 40
+            radius: 25
         };
     }
 
     setHead(imageSrc) {
-        this.headImage.src = imageSrc;
+        // CORRECTION : Chemin du dossier ajouté ici
+        this.headImage.src = '../asset/character/' + imageSrc;
     }
 
     draw() {
@@ -118,30 +119,31 @@ class Fighter {
         }
         ctx.stroke();
 
-        // Attack Box visual
+        // NOUVEAU : Visuel de l'Attack Box en cercle
         if (this.isAttacking) {
             ctx.fillStyle = this.attackType === 'punch' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 215, 0, 0.3)';
-            ctx.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
+            ctx.beginPath();
+            ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
     update() {
         this.draw();
 
-        if (this.side === 'left') {
-            this.attackBox.position.x = this.position.x + this.width;
-        } else {
-            this.attackBox.position.x = this.position.x - this.attackBox.width;
+        // NOUVEAU : Position et taille des cercles d'attaque
+        if (this.attackType === 'punch') {
+            this.attackBox.radius = 25;
+            this.attackBox.position.y = this.position.y + 50;
+        } else if (this.attackType === 'kick') {
+            this.attackBox.radius = 35;
+            this.attackBox.position.y = this.position.y + 110;
         }
 
-        if (this.attackType === 'punch') {
-            this.attackBox.position.y = this.position.y + 35;
-            this.attackBox.width = 60;
-            this.attackBox.height = 30;
-        } else if (this.attackType === 'kick') {
-            this.attackBox.position.y = this.position.y + 75;
-            this.attackBox.width = 70;
-            this.attackBox.height = 40;
+        if (this.side === 'left') {
+            this.attackBox.position.x = this.position.x + this.width + 10;
+        } else {
+            this.attackBox.position.x = this.position.x - 10;
         }
 
         this.position.x += this.velocity.x;
@@ -191,17 +193,27 @@ const player2 = new Fighter({
     side: 'right'
 });
 
-function rectangularCollision({ rectangle1, rectangle2 }) {
-    return (
-        rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
-        rectangle1.attackBox.position.x <= rectangle2.position.x + rectangle2.width &&
-        rectangle1.attackBox.position.y + rectangle1.attackBox.height >= rectangle2.position.y &&
-        rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
-    )
+// NOUVEAU : Fonction mathématique pour calculer la collision Cercle/Rectangle
+function circleRectCollision(circle, rect) {
+    let testX = circle.position.x;
+    let testY = circle.position.y;
+
+    if (circle.position.x < rect.position.x) testX = rect.position.x;
+    else if (circle.position.x > rect.position.x + rect.width) testX = rect.position.x + rect.width;
+
+    if (circle.position.y < rect.position.y) testY = rect.position.y;
+    else if (circle.position.y > rect.position.y + rect.height) testY = rect.position.y + rect.height;
+
+    const distX = circle.position.x - testX;
+    const distY = circle.position.y - testY;
+    const distance = Math.sqrt((distX * distX) + (distY * distY));
+
+    return distance <= circle.radius;
 }
 
 function checkHit(attacker, defender) {
-    if (rectangularCollision({ rectangle1: attacker, rectangle2: defender })) {
+    // NOUVEAU : Utilisation de la nouvelle fonction de collision
+    if (circleRectCollision(attacker.attackBox, defender)) {
         const damage = attacker.attackType === 'punch' ? 7 : 12;
         defender.health -= damage;
         if (defender.health < 0) defender.health = 0;
@@ -324,20 +336,18 @@ function animate() {
 window.addEventListener('keydown', (event) => {
     if (gameOver || !gameActive) return;
 
-    // On convertit en minuscule pour simplifier les conditions
     const key = event.key.toLowerCase();
 
     switch (key) {
-        // --- Joueur 1 ---
         case 'd': 
             keys.d.pressed = true; 
             break;
         case 'a': 
-        case 'q': // Support AZERTY (gauche)
+        case 'q': 
             keys.a.pressed = true; 
             break;
         case 'w': 
-        case 'z': // Support AZERTY (saut)
+        case 'z': 
             if (player1.isGrounded) player1.velocity.y = -18; 
             break;
         case 'f': 
@@ -347,7 +357,6 @@ window.addEventListener('keydown', (event) => {
             player1.attack('kick'); 
             break;
 
-        // --- Joueur 2 ---
         case 'arrowright': 
             keys.ArrowRight.pressed = true; 
             break;
@@ -359,7 +368,6 @@ window.addEventListener('keydown', (event) => {
             break;
     }
 
-    // Gestion avec event.code pour les touches spéciales (Shift/Ctrl)
     if (event.code === 'ShiftRight') player2.attack('punch');
     if (event.code === 'ControlRight') player2.attack('kick');
 });
@@ -372,7 +380,7 @@ window.addEventListener('keyup', (event) => {
             keys.d.pressed = false; 
             break;
         case 'a': 
-        case 'q': // Support AZERTY
+        case 'q': 
             keys.a.pressed = false; 
             break;
         case 'arrowright': 
@@ -384,5 +392,4 @@ window.addEventListener('keyup', (event) => {
     }
 });
 
-// Start background loop, but keep game paused until "FIGHT!" is clicked
 animate();
