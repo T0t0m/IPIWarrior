@@ -324,28 +324,63 @@ function animate() {
 window.addEventListener('keydown', (event) => {
     if (gameOver || !gameActive) return;
 
-    switch (event.key) {
-        case 'd': case 'D': keys.d.pressed = true; break;
-        case 'a': case 'A': keys.a.pressed = true; break;
-        case 'w': case 'W': if (player1.isGrounded) player1.velocity.y = -18; break;
-        case 'f': case 'F': player1.attack('punch'); break;
-        case 'g': case 'G': player1.attack('kick'); break;
+    // On convertit en minuscule pour simplifier les conditions
+    const key = event.key.toLowerCase();
 
-        case 'ArrowRight': keys.ArrowRight.pressed = true; break;
-        case 'ArrowLeft': keys.ArrowLeft.pressed = true; break;
-        case 'ArrowUp': if (player2.isGrounded) player2.velocity.y = -18; break;
+    switch (key) {
+        // --- Joueur 1 ---
+        case 'd': 
+            keys.d.pressed = true; 
+            break;
+        case 'a': 
+        case 'q': // Support AZERTY (gauche)
+            keys.a.pressed = true; 
+            break;
+        case 'w': 
+        case 'z': // Support AZERTY (saut)
+            if (player1.isGrounded) player1.velocity.y = -18; 
+            break;
+        case 'f': 
+            player1.attack('punch'); 
+            break;
+        case 'g': 
+            player1.attack('kick'); 
+            break;
+
+        // --- Joueur 2 ---
+        case 'arrowright': 
+            keys.ArrowRight.pressed = true; 
+            break;
+        case 'arrowleft': 
+            keys.ArrowLeft.pressed = true; 
+            break;
+        case 'arrowup': 
+            if (player2.isGrounded) player2.velocity.y = -18; 
+            break;
     }
 
+    // Gestion avec event.code pour les touches spéciales (Shift/Ctrl)
     if (event.code === 'ShiftRight') player2.attack('punch');
     if (event.code === 'ControlRight') player2.attack('kick');
 });
 
 window.addEventListener('keyup', (event) => {
-    switch (event.key) {
-        case 'd': case 'D': keys.d.pressed = false; break;
-        case 'a': case 'A': keys.a.pressed = false; break;
-        case 'ArrowRight': keys.ArrowRight.pressed = false; break;
-        case 'ArrowLeft': keys.ArrowLeft.pressed = false; break;
+    const key = event.key.toLowerCase();
+    
+    switch (key) {
+        case 'd': 
+            keys.d.pressed = false; 
+            break;
+        case 'a': 
+        case 'q': // Support AZERTY
+            keys.a.pressed = false; 
+            break;
+        case 'arrowright': 
+            keys.ArrowRight.pressed = false; 
+            break;
+        case 'arrowleft': 
+            keys.ArrowLeft.pressed = false; 
+            break;
     }
 });
 
