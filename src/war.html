@@ -10,86 +10,92 @@
 
 <body>
 
-<h1>IPI Warrior</h1>
+    <h1>IPI Warrior</h1>
 
-<div class="game-wrapper">
+    <div class="game-wrapper">
 
-    <!-- Contrôles Joueur 1 mis à jour -->
-    <div class="side-controls">
-        <h3 class="p1-color">PLAYER 1</h3>
-        <div class="control-box">
-            <p><strong>Move</strong><br>Q-D / A-D</p>
-            <p><strong>Jump</strong><br>Z / W</p>
-            <p><strong>Block</strong><br>S</p>
-            <p><strong>Punch</strong><br>F</p>
-            <p><strong>Kick</strong><br>G</p>
+        <div class="side-controls">
+            <h3 class="p1-color">PLAYER 1</h3>
+            <div class="control-box">
+                <p><strong>Move</strong><br>Q-D / A-D</p>
+                <p><strong>Jump</strong><br>Z / W</p>
+                <p><strong>Block</strong><br>S</p>
+                <p><strong>Punch</strong><br>F</p>
+                <p><strong>Kick</strong><br>G</p>
+            </div>
         </div>
-    </div>
 
-    <div id="game-container">
-        <div id="character-select">
-            <h2>SELECT YOUR FIGHTERS</h2>
-            <div class="selection-area">
-                <div class="player-select">
-                    <h3 class="p1-color">PLAYER 1 (RED)</h3>
-                    <div class="portrait-container">
-                        <img src="../asset/character/fx.png" alt="FX" class="portrait selected-p1" id="p1-fx"
-                             onclick="selectChar(1, '../asset/character/fx.png', 'p1-fx')">
-                        <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait"
-                             id="p1-kotlineur" onclick="selectChar(1, '../asset/character/kotlineur.png', 'p1-kotlineur')">
-                        <img src="../asset/character/etienne.png" alt="Etienne" class="portrait" id="p1-etienne"
-                             onclick="selectChar(1, '../asset/character/etienne.png', 'p1-etienne')">
+        <div id="game-container">
+            <div id="character-select">
+                <h2>SELECT YOUR FIGHTERS</h2>
+                <div class="selection-area">
+                    <div class="player-select">
+                        <h3 class="p1-color">PLAYER 1 (RED)</h3>
+                        <div class="portrait-container">
+                            <img src="../asset/character/fx.png" alt="FX" class="portrait selected-p1" id="p1-fx"
+                                onclick="selectChar(1, 'fx.png', 'p1-fx')">
+                            <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait"
+                                id="p1-kotlineur" onclick="selectChar(1, 'kotlineur.png', 'p1-kotlineur')">
+                            <img src="../asset/character/etienne.png" alt="Etienne" class="portrait" id="p1-etienne"
+                                onclick="selectChar(1, 'etienne.png', 'p1-etienne')">
+                        </div>
+                    </div>
+
+                    <div class="player-select">
+                        <h3 class="p2-color">PLAYER 2 (BLUE)</h3>
+                        <div class="portrait-container">
+                            <img src="../asset/character/fx.png" alt="FX" class="portrait" id="p2-fx"
+                                onclick="selectChar(2, 'fx.png', 'p2-fx')">
+                            <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait selected-p2"
+                                id="p2-kotlineur" onclick="selectChar(2, 'kotlineur.png', 'p2-kotlineur')">
+                            <img src="../asset/character/etienne.png" alt="Etienne" class="portrait" id="p2-etienne"
+                                onclick="selectChar(2, 'etienne.png', 'p2-etienne')">
+                        </div>
                     </div>
                 </div>
+                <button id="start-fight-btn" onclick="startGame()">FIGHT!</button>
+            </div>
 
-                <div class="player-select">
-                    <h3 class="p2-color">PLAYER 2 (BLUE)</h3>
-                    <div class="portrait-container">
-                        <img src="../asset/character/fx.png" alt="FX" class="portrait" id="p2-fx"
-                             onclick="selectChar(2, '../asset/character/fx.png', 'p2-fx')">
-                        <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait selected-p2"
-                             id="p2-kotlineur" onclick="selectChar(2, '../asset/character/kotlineur.png', 'p2-kotlineur')">
-                        <img src="../asset/character/etienne.png" alt="Etienne" class="portrait" id="p2-etienne"
-                             onclick="selectChar(2, '../asset/character/etienne.png', 'p2-etienne')">
+            <canvas id="gameCanvas"></canvas>
+
+            <div id="ui">
+                <div class="player-ui">
+                    <div class="health-bar-container" id="p1-health-container">
+                        <div class="health-bar" id="p1-health"></div>
                     </div>
+                    <div id="p1-name" class="char-name p1-color">PLAYER 1</div>
+                </div>
+
+                <div id="timer">99</div>
+
+                <div class="player-ui p2-ui">
+                    <div class="health-bar-container" id="p2-health-container">
+                        <div class="health-bar" id="p2-health"></div>
+                    </div>
+                    <div id="p2-name" class="char-name p2-color">PLAYER 2</div>
                 </div>
             </div>
-            <button id="start-fight-btn" onclick="startGame()">FIGHT!</button>
-        </div>
 
-        <canvas id="gameCanvas"></canvas>
-
-        <div id="ui">
-            <div class="health-bar-container" id="p1-health-container">
-                <div class="health-bar" id="p1-health"></div>
-            </div>
-            <div id="timer">99</div>
-            <div class="health-bar-container" id="p2-health-container">
-                <div class="health-bar" id="p2-health"></div>
+            <div id="display-text">
+                <span id="win-message">PLAYER 1 WINS!</span>
+                <button id="restart-btn" onclick="returnToMenu()">CHARACTER SELECT</button>
             </div>
         </div>
 
-        <div id="display-text">
-            <span id="win-message">PLAYER 1 WINS!</span>
-            <button id="restart-btn" onclick="returnToMenu()">CHARACTER SELECT</button>
+        <div class="side-controls">
+            <h3 class="p2-color">PLAYER 2</h3>
+            <div class="control-box">
+                <p><strong>Move</strong><br>◄ / ►</p>
+                <p><strong>Jump</strong><br>▲</p>
+                <p><strong>Block</strong><br>▼</p>
+                <p><strong>Punch</strong><br>R-Shift</p>
+                <p><strong>Kick</strong><br>R-Ctrl</p>
+            </div>
         </div>
+
     </div>
 
-    <!-- Contrôles Joueur 2 mis à jour -->
-    <div class="side-controls">
-        <h3 class="p2-color">PLAYER 2</h3>
-        <div class="control-box">
-            <p><strong>Move</strong><br>◄ / ►</p>
-            <p><strong>Jump</strong><br>▲</p>
-            <p><strong>Block</strong><br>▼</p>
-            <p><strong>Punch</strong><br>R-Shift</p>
-            <p><strong>Kick</strong><br>R-Ctrl</p>
-        </div>
-    </div>
-
-</div>
-
-<script src="war.js"></script>
+    <script src="war.js"></script>
 </body>
 
 </html>

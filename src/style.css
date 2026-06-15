@@ -23,7 +23,7 @@ h1 {
     letter-spacing: 2px;
 }
 
-/* --- Nouvelle disposition Arcade (Panneaux latéraux) --- */
+/* --- Disposition Arcade (Panneaux latéraux) --- */
 .game-wrapper {
     display: flex;
     flex-direction: row;
@@ -197,17 +197,27 @@ h1 {
     left: 0;
     width: 100%;
     display: none;
-    /* Hidden until game starts */
-    align-items: center;
+    align-items: flex-start;
+    /* Aligné vers le haut pour les noms */
     padding: 20px;
     justify-content: space-between;
     pointer-events: none;
     z-index: 5;
 }
 
+.player-ui {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+}
+
+.p2-ui {
+    align-items: flex-end;
+}
+
 .health-bar-container {
     position: relative;
-    width: 40%;
+    width: 100%;
     height: 30px;
     background-color: #444;
     border: 2px solid #fff;
@@ -237,6 +247,15 @@ h1 {
 #p2-health {
     left: 0;
     background: linear-gradient(90deg, #00d2ff, #0066ff);
+}
+
+.char-name {
+    margin-top: 8px;
+    font-size: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px currentColor;
 }
 
 #timer {
@@ -281,7 +300,6 @@ h1 {
     cursor: pointer;
     border-radius: 5px;
     pointer-events: auto;
-    /* Ensure button is clickable */
 }
 
 #restart-btn:hover {

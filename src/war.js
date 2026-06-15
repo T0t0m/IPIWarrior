@@ -12,11 +12,18 @@ let p1Choice = 'fx.png';
 let p2Choice = 'kotlineur.png';
 let gameActive = false;
 
-// Track key states (Fusion réussie : 's' et 'ArrowDown' sont bien là)
+// Track key states
 const keys = {
     a: { pressed: false }, d: { pressed: false }, w: { pressed: false }, s: { pressed: false },
     ArrowLeft: { pressed: false }, ArrowRight: { pressed: false }, ArrowUp: { pressed: false }, ArrowDown: { pressed: false }
 };
+
+// Formater le nom du personnage
+function formatCharacterName(filename) {
+    let rawName = filename.replace('.png', '');
+    if (rawName.toLowerCase() === 'fx') return 'FX';
+    return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+}
 
 // UI Menu Logic
 function selectChar(playerNum, imageSrc, elementId) {
@@ -46,7 +53,7 @@ class Fighter {
         this.side = side;
         this.isGrounded = false;
         this.isAttacking = false;
-        this.isBlocking = false; // NOUVEAU : État de garde
+        this.isBlocking = false;
         this.attackType = null;
         this.attackTimer = 0;
         this.cooldown = 0;
@@ -104,7 +111,7 @@ class Fighter {
         }
         ctx.stroke();
 
-        // Arms (MODIFIÉ : Ajout de la posture de blocage)
+        // Arms
         ctx.beginPath();
         if (this.isAttacking && this.attackType === 'punch') {
             ctx.moveTo(centerX, topY + 50);
@@ -112,7 +119,6 @@ class Fighter {
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 50);
         } else if (this.isBlocking) {
-            // Posture de garde (bras croisés devant)
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (15 * dir), topY + 25);
             ctx.moveTo(centerX, topY + 50);
@@ -180,7 +186,6 @@ class Fighter {
     }
 
     attack(type) {
-        // NOUVEAU : On ne peut pas attaquer pendant qu'on bloque
         if (this.isAttacking || this.cooldown > 0 || this.isBlocking) return;
 
         this.isAttacking = true;
@@ -234,10 +239,9 @@ function checkHit(attacker, defender) {
         let damage = attacker.attackType === 'punch' ? 7 : 12;
         let knockbackDirection = attacker.side === 'left' ? 15 : -15;
 
-        // NOUVEAU : Gestion de l'absorption des dégâts par le blocage
         if (defender.isBlocking) {
-            damage = Math.floor(damage * 0.25); // Dégâts réduits à 25%
-            knockbackDirection = knockbackDirection / 2; // Recul réduit
+            damage = Math.floor(damage * 0.25);
+            knockbackDirection = knockbackDirection / 2;
         }
 
         defender.health -= damage;
@@ -286,6 +290,10 @@ function determineWinner() {
 function startGame() {
     player1.setHead(p1Choice);
     player2.setHead(p2Choice);
+
+    // Formatage et affichage des noms
+    document.getElementById('p1-name').innerText = formatCharacterName(p1Choice);
+    document.getElementById('p2-name').innerText = formatCharacterName(p2Choice);
 
     document.getElementById('character-select').style.display = 'none';
     document.getElementById('ui').style.display = 'flex';
@@ -349,11 +357,9 @@ function animate() {
         player2.side = 'left';
     }
 
-    // NOUVEAU : Application des contrôles de blocage
     player1.isBlocking = keys.s.pressed && player1.isGrounded;
     player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
 
-    // NOUVEAU : Un joueur qui bloque ne peut pas avancer/reculer
     player1.velocity.x = 0;
     if (!player1.isBlocking) {
         if (keys.a.pressed) player1.velocity.x = -6;
@@ -389,7 +395,7 @@ window.addEventListener('keydown', (event) => {
         case 'z':
             if (player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
             break;
-        case 's': // NOUVEAU
+        case 's':
             keys.s.pressed = true;
             break;
         case 'f':
@@ -409,7 +415,7 @@ window.addEventListener('keydown', (event) => {
         case 'arrowup':
             if (player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
             break;
-        case 'arrowdown': // NOUVEAU
+        case 'arrowdown':
             keys.ArrowDown.pressed = true;
             break;
     }
@@ -430,7 +436,7 @@ window.addEventListener('keyup', (event) => {
         case 'q':
             keys.a.pressed = false;
             break;
-        case 's': // NOUVEAU
+        case 's':
             keys.s.pressed = false;
             break;
 
@@ -441,7 +447,7 @@ window.addEventListener('keyup', (event) => {
         case 'arrowleft':
             keys.ArrowLeft.pressed = false;
             break;
-        case 'arrowdown': // NOUVEAU
+        case 'arrowdown':
             keys.ArrowDown.pressed = false;
             break;
     }
