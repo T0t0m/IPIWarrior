@@ -394,6 +394,9 @@ canvas {
     display: flex;
     gap: 20px;
     justify-content: center;
+    flex-wrap: wrap; /* Ajoute cette ligne pour que les miniatures retournent à la ligne */
+    max-width: 600px; /* Optionnel : empêche les miniatures de trop s'étirer sur les grands écrans */
+    margin: 0 auto; /* Optionnel : centre le bloc */
 }
 
 .bg-portrait {
