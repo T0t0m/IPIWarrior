@@ -691,30 +691,21 @@ window.addEventListener('blur', () => {
 // INTERCEPTION CLAVIER POUR LE MAPPING LIGNE / LOCAL
 window.addEventListener('keydown', (e) => {
     if (gameOver || !gameActive) return;
-    e.preventDefault();
+    e.preventDefault(); // Empêche la page de scroller avec les flèches
 
     if (isLocalMode) {
-        // En local, on envoie la touche telle quelle à l'hôte
+        // En local, un seul PC gère tout
         handleInput(e.key, e.code, true);
     } else {
         if (isHost) {
-            // L'hôte en ligne ne lit que ses propres touches ZQSD (p1Codes)
+            // L'hôte en ligne ne lit strictement QUE ses propres touches (Joueur 1)
             const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
             if (p1Codes.includes(e.code)) handleInput(e.key, e.code, true);
         } else if (conn) {
-            // Le client en ligne MAP ses touches ZQSD vers les Flèches avant d'envoyer
-            let mappedCode = e.code;
-            if (['KeyW', 'KeyZ'].includes(e.code)) mappedCode = 'ArrowUp';
-            if (['KeyS'].includes(e.code)) mappedCode = 'ArrowDown';
-            if (['KeyA', 'KeyQ'].includes(e.code)) mappedCode = 'ArrowLeft';
-            if (['KeyD'].includes(e.code)) mappedCode = 'ArrowRight';
-            if (['KeyF'].includes(e.code)) mappedCode = 'ShiftRight';
-            if (['KeyG'].includes(e.code)) mappedCode = 'ControlRight';
-            if (['KeyE'].includes(e.code)) mappedCode = 'Enter';
-
+            // Le client en ligne n'envoie strictement QUE les flèches/contrôles du Joueur 2
             const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
-            if (p2Codes.includes(mappedCode)) {
-                conn.send({ type: 'keydown', key: e.key, code: mappedCode });
+            if (p2Codes.includes(e.code)) {
+                conn.send({ type: 'keydown', key: e.key, code: e.code });
             }
         }
     }
@@ -728,18 +719,9 @@ window.addEventListener('keyup', (e) => {
             const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
             if (p1Codes.includes(e.code)) handleInput(e.key, e.code, false);
         } else if (conn) {
-            let mappedCode = e.code;
-            if (['KeyW', 'KeyZ'].includes(e.code)) mappedCode = 'ArrowUp';
-            if (['KeyS'].includes(e.code)) mappedCode = 'ArrowDown';
-            if (['KeyA', 'KeyQ'].includes(e.code)) mappedCode = 'ArrowLeft';
-            if (['KeyD'].includes(e.code)) mappedCode = 'ArrowRight';
-            if (['KeyF'].includes(e.code)) mappedCode = 'ShiftRight';
-            if (['KeyG'].includes(e.code)) mappedCode = 'ControlRight';
-            if (['KeyE'].includes(e.code)) mappedCode = 'Enter';
-
             const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
-            if (p2Codes.includes(mappedCode)) {
-                conn.send({ type: 'keyup', key: e.key, code: mappedCode });
+            if (p2Codes.includes(e.code)) {
+                conn.send({ type: 'keyup', key: e.key, code: e.code });
             }
         }
     }
