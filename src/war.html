@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPI Warrior - LAN Edition</title>
+    <title>IPI Warrior - Édition Rétro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sixtyfour+Convergence&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
@@ -16,42 +19,49 @@
 <div class="game-wrapper">
 
     <div class="side-controls">
-        <h3 class="p1-color">PLAYER 1 (HOST)</h3>
+        <h3 class="p1-color">JOUEUR 1<br><small>(Local / Hôte Ligne)</small></h3>
         <div class="control-box">
-            <p><strong>Move</strong><br>Q-D / A-D</p>
-            <p><strong>Jump</strong><br>Z / W</p>
-            <p><strong>Block</strong><br>S</p>
-            <p><strong>Punch</strong><br>F</p>
-            <p><strong>Kick</strong><br>G</p>
-            <p><strong>Ulti</strong><br>E</p>
+            <p><strong>Bouger</strong><br>Z-Q-S-D</p>
+            <p><strong>Sauter</strong><br>Z</p>
+            <p><strong>Bloquer</strong><br>S</p>
+            <p><strong>Poing</strong><br>F</p>
+            <p><strong>Pied</strong><br>G</p>
+            <p><strong>Ultime</strong><br>E</p>
         </div>
     </div>
 
     <div id="game-container">
 
-        <div id="network-menu">
-            <h2>LAN MULTIPLAYER</h2>
+        <div id="main-menu">
+            <h2>IPI WARRIOR</h2>
+            <button class="menu-btn" onclick="startLocal()">JOUER EN LOCAL</button>
+            <button class="menu-btn" onclick="showNetworkMenu()">JOUER EN LIGNE</button>
+        </div>
+
+        <div id="network-menu" style="display: none;">
+            <h2>MULTIJOUEUR RÉSEAU</h2>
             <div class="net-actions">
                 <div class="net-box">
-                    <h3>Host a Game</h3>
-                    <button onclick="hostGame()">Create Room</button>
-                    <p id="room-id-display">Waiting to host...</p>
+                    <h3>Créer une partie</h3>
+                    <button onclick="hostGame()">Héberger</button>
+                    <p id="room-id-display">En attente...</p>
                 </div>
                 <div class="net-box">
-                    <h3>Join a Game</h3>
-                    <input type="text" id="join-id" placeholder="Enter Room ID">
-                    <button onclick="joinGame()">Join Room</button>
+                    <h3>Rejoindre une partie</h3>
+                    <input type="text" id="join-id" placeholder="ID du Salon">
+                    <button onclick="joinGame()">Rejoindre</button>
                     <p id="join-status"></p>
                 </div>
             </div>
+            <button class="menu-btn" style="margin-top: 30px; font-size: 16px;" onclick="returnToMainMenu()">RETOUR AU MENU</button>
         </div>
 
         <div id="character-select" style="display: none;">
-            <h2>SELECT YOUR FIGHTERS</h2>
+            <h2>SÉLECTION DES COMBATTANTS</h2>
             <div class="selection-area">
 
                 <div class="player-select" id="p1-selection">
-                    <h3 class="p1-color">PLAYER 1 (RED)</h3>
+                    <h3 class="p1-color">JOUEUR 1 (ROUGE)</h3>
                     <div class="portrait-container">
                         <img src="../asset/character/fx.png" alt="FX" class="portrait selected-p1" id="p1-fx" onclick="handleCharSelect(1, '../asset/character/fx.png', 'p1-fx')">
                         <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait" id="p1-kotlineur" onclick="handleCharSelect(1, '../asset/character/kotlineur.png', 'p1-kotlineur')">
@@ -62,7 +72,7 @@
                 </div>
 
                 <div class="player-select" id="p2-selection">
-                    <h3 class="p2-color">PLAYER 2 (BLUE)</h3>
+                    <h3 class="p2-color">JOUEUR 2 (BLEU)</h3>
                     <div class="portrait-container">
                         <img src="../asset/character/fx.png" alt="FX" class="portrait" id="p2-fx" onclick="handleCharSelect(2, '../asset/character/fx.png', 'p2-fx')">
                         <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait selected-p2" id="p2-kotlineur" onclick="handleCharSelect(2, '../asset/character/kotlineur.png', 'p2-kotlineur')">
@@ -75,15 +85,15 @@
             </div>
 
             <div class="stage-select">
-                <h3>SELECT STAGE</h3>
+                <h3>CHOIX DU STAGE</h3>
                 <div class="bg-container">
                     <img src="../asset/backgrounds/ipi.png" alt="IPI Arena" class="bg-portrait selected-bg" id="bg-ipi" onclick="handleBgSelect('../asset/backgrounds/ipi.png', 'bg-ipi')">
                     <img src="../asset/backgrounds/ipi-china.png" alt="IPI China" class="bg-portrait" id="bg-ipi-china" onclick="handleBgSelect('../asset/backgrounds/ipi-china.png', 'bg-ipi-china')">
                 </div>
             </div>
 
-            <button id="start-fight-btn" onclick="handleStartGame()" style="display: none;">FIGHT!</button>
-            <p id="waiting-host-msg" style="display: none; font-size: 24px; color: #ffcc00; font-weight: bold;">WAITING FOR HOST TO START...</p>
+            <button id="start-fight-btn" onclick="handleStartGame()" style="display: none;">COMBAT !</button>
+            <p id="waiting-host-msg" style="display: none; font-size: 24px; color: #ffcc00; font-weight: bold;">EN ATTENTE DE L'HÔTE...</p>
         </div>
 
         <canvas id="gameCanvas"></canvas>
@@ -96,7 +106,7 @@
                 <div class="ulti-bar-container" id="p1-ulti-container">
                     <div class="ulti-bar" id="p1-ulti"></div>
                 </div>
-                <div id="p1-name" class="char-name p1-color">PLAYER 1</div>
+                <div id="p1-name" class="char-name p1-color">JOUEUR 1</div>
             </div>
 
             <div id="timer">99</div>
@@ -108,25 +118,26 @@
                 <div class="ulti-bar-container" id="p2-ulti-container">
                     <div class="ulti-bar" id="p2-ulti"></div>
                 </div>
-                <div id="p2-name" class="char-name p2-color">PLAYER 2</div>
+                <div id="p2-name" class="char-name p2-color">JOUEUR 2</div>
             </div>
         </div>
 
         <div id="display-text">
-            <span id="win-message">PLAYER 1 WINS!</span>
-            <button id="restart-btn" onclick="returnToMenu()">CHARACTER SELECT</button>
+            <span id="win-message">JOUEUR 1 GAGNE !</span>
+            <button id="restart-btn" onclick="returnToMenu()">MENU PERSONNAGES</button>
         </div>
     </div>
 
     <div class="side-controls">
-        <h3 class="p2-color">PLAYER 2 (CLIENT)</h3>
+        <h3 class="p2-color">JOUEUR 2<br><small>(Local Uniquement)</small></h3>
         <div class="control-box">
-            <p><strong>Move</strong><br>◄ / ►</p>
-            <p><strong>Jump</strong><br>▲</p>
-            <p><strong>Block</strong><br>▼</p>
-            <p><strong>Punch</strong><br>R-Shift</p>
-            <p><strong>Kick</strong><br>R-Ctrl</p>
-            <p><strong>Ulti</strong><br>Enter</p>
+            <p><strong>Bouger</strong><br>◄ / ►</p>
+            <p><strong>Sauter</strong><br>▲</p>
+            <p><strong>Bloquer</strong><br>▼</p>
+            <p><strong>Poing</strong><br>Shift Droit</p>
+            <p><strong>Pied</strong><br>Ctrl Droit</p>
+            <p><strong>Ultime</strong><br>Entrée</p>
+            <p style="margin-top:15px; color:#ffea00; font-size:10px;">En ligne, J2 utilise ZQSD</p>
         </div>
     </div>
 

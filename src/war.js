@@ -11,9 +11,10 @@ let p2Choice = '../asset/character/kotlineur.png';
 let bgChoice = '../asset/backgrounds/ipi.png';
 const bgImage = new Image();
 let gameActive = false;
+let isLocalMode = false; // Gère le mode Local ou Ligne
 
 const keys = {
-    // P1 - stored by code to be layout-agnostic
+    // P1
     KeyA: { pressed: false }, KeyD: { pressed: false }, KeyQ: { pressed: false },
     KeyW: { pressed: false }, KeyZ: { pressed: false }, KeyS: { pressed: false },
     KeyF: { pressed: false }, KeyG: { pressed: false }, KeyE: { pressed: false },
@@ -27,10 +28,29 @@ let peer = null;
 let conn = null;
 let isHost = false;
 
+function startLocal() {
+    isLocalMode = true;
+    isHost = true;
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('character-select').style.display = 'flex';
+    document.getElementById('start-fight-btn').style.display = 'block';
+}
+
+function showNetworkMenu() {
+    isLocalMode = false;
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('network-menu').style.display = 'flex';
+}
+
+function returnToMainMenu() {
+    document.getElementById('network-menu').style.display = 'none';
+    document.getElementById('main-menu').style.display = 'flex';
+}
+
 function hostGame() {
     isHost = true;
-    peer = new Peer(); // Auto-generate ID
-    document.getElementById('room-id-display').innerText = "Connecting to server...";
+    peer = new Peer();
+    document.getElementById('room-id-display').innerText = "Création du salon...";
 
     peer.on('open', (id) => {
         document.getElementById('room-id-display').innerText = id;
@@ -39,10 +59,9 @@ function hostGame() {
     peer.on('connection', (connection) => {
         conn = connection;
         setupConnection();
-        // Hide network menu, show character select
         document.getElementById('network-menu').style.display = 'none';
         document.getElementById('character-select').style.display = 'flex';
-        document.getElementById('start-fight-btn').style.display = 'block'; // Host can start
+        document.getElementById('start-fight-btn').style.display = 'block';
     });
 }
 
@@ -53,14 +72,14 @@ function joinGame() {
 
     peer = new Peer();
     peer.on('open', () => {
-        document.getElementById('join-status').innerText = "Connecting...";
+        document.getElementById('join-status').innerText = "Connexion en cours...";
         conn = peer.connect(roomId);
         setupConnection();
 
         conn.on('open', () => {
             document.getElementById('network-menu').style.display = 'none';
             document.getElementById('character-select').style.display = 'flex';
-            document.getElementById('waiting-host-msg').style.display = 'block'; // Client waits
+            document.getElementById('waiting-host-msg').style.display = 'block';
         });
     });
 }
@@ -85,29 +104,29 @@ function setupConnection() {
     });
 }
 
-// Intercept UI clicks to send over network
 function handleCharSelect(playerNum, imageSrc, elementId) {
-    if ((isHost && playerNum === 1) || (!isHost && playerNum === 2)) {
+    if (isLocalMode) {
         selectChar(playerNum, imageSrc, elementId);
-        conn.send({ type: 'charSelect', playerNum, imageSrc, elementId });
+    } else if ((isHost && playerNum === 1) || (!isHost && playerNum === 2)) {
+        selectChar(playerNum, imageSrc, elementId);
+        if (conn) conn.send({ type: 'charSelect', playerNum, imageSrc, elementId });
     }
 }
 
 function handleBgSelect(imageSrc, elementId) {
-    if (isHost) { // Only host selects stage
+    if (isHost) {
         selectBg(imageSrc, elementId);
-        conn.send({ type: 'bgSelect', imageSrc, elementId });
+        if (conn) conn.send({ type: 'bgSelect', imageSrc, elementId });
     }
 }
 
 function handleStartGame() {
     if (isHost) {
         startGame();
-        conn.send({ type: 'startGame' });
+        if (conn) conn.send({ type: 'startGame' });
     }
 }
 
-// Standard UI functions
 function selectChar(playerNum, imageSrc, elementId) {
     if (playerNum === 1) {
         p1Choice = imageSrc;
@@ -132,7 +151,7 @@ function formatCharacterName(filename) {
     return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 }
 
-// --- FIGHTER LOGIC (Unchanged, calculates on Host only) ---
+// --- FIGHTER LOGIC ---
 class Fighter {
     constructor({ position, velocity, color, side }) {
         this.position = position;
@@ -295,14 +314,14 @@ class Fighter {
         }
 
         if (this.isStunned && !this.isKO) {
-            ctx.fillStyle = '#ffcc00'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('⚡ STUNNED ⚡', centerX - 45, topY - 30);
+            ctx.fillStyle = '#ffcc00'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('⚡ ÉTOURDI ⚡', centerX - 45, topY - 30);
         }
         ctx.restore();
     }
 
     update() {
         if (!isHost) {
-            this.draw(); // Clients only draw based on received state
+            this.draw();
             return;
         }
 
@@ -360,7 +379,7 @@ class Fighter {
     }
 
     attack(type) {
-        if (!isHost) return; // Only host handles attacks
+        if (!isHost) return;
         if (this.isAttacking || this.isStunned || this.isKO || this.isBlocking || this.cooldown > 0) return;
 
         if (type === 'ulti') {
@@ -397,7 +416,7 @@ class Fighter {
 const player1 = new Fighter({ position: { x: 150, y: 0 }, velocity: { x: 0, y: 0 }, color: '#ff0055', side: 'left' });
 const player2 = new Fighter({ position: { x: 800, y: 0 }, velocity: { x: 0, y: 0 }, color: '#00d2ff', side: 'right' });
 
-// Collisions & Combat Logic (Host only)
+// Collisions & Combat
 function circleRectCollision(circle, rect) {
     let testX = circle.position.x; let testY = circle.position.y;
     if (circle.position.x < rect.position.x) testX = rect.position.x;
@@ -452,7 +471,6 @@ function updateHealthUI() {
     document.getElementById('p2-ulti').style.width = player2.ultimateCharge + '%';
 }
 
-// Game State Syncing (Host -> Client)
 function serializePlayer(p) {
     return {
         x: p.position.x, y: p.position.y, health: p.health, side: p.side,
@@ -465,7 +483,6 @@ function serializePlayer(p) {
 }
 
 function syncGameState(state) {
-    // Client applies Host's exact state
     const applyState = (p, data) => {
         p.position.x = data.x; p.position.y = data.y; p.health = data.health; p.side = data.side;
         p.isGrounded = data.isGrounded; p.isAttacking = data.isAttacking; p.isBlocking = data.isBlocking;
@@ -501,11 +518,10 @@ function determineWinner() {
     const msg = document.getElementById('win-message');
     display.style.display = 'flex';
 
-    if (player1.health === player2.health) msg.innerText = "DRAW GAME";
-    else if (player1.health > player2.health) msg.innerText = formatCharacterName(p1Choice) + " WINS!";
-    else msg.innerText = formatCharacterName(p2Choice) + " WINS!";
+    if (player1.health === player2.health) msg.innerText = "ÉGALITÉ !";
+    else if (player1.health > player2.health) msg.innerText = formatCharacterName(p1Choice) + " GAGNE !";
+    else msg.innerText = formatCharacterName(p2Choice) + " GAGNE !";
 
-    // Client restart button is hidden, only Host controls flow
     document.getElementById('restart-btn').style.display = isHost ? 'block' : 'none';
 }
 
@@ -537,7 +553,7 @@ function startGame() {
 }
 
 function returnToMenu() {
-    if (isHost) conn.send({ type: 'restart' });
+    if (isHost && !isLocalMode) conn.send({ type: 'restart' });
     gameActive = false;
     resetAllKeys();
     document.getElementById('display-text').style.display = 'none';
@@ -557,11 +573,10 @@ function animate() {
     else { ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
 
     ctx.fillStyle = '#111116'; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, groundY, canvas.width, 2);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, groundY, canvas.width, 4);
 
     player1.update(); player2.update();
 
-    // --- HOST PHYSICS LOGIC ---
     if (isHost) {
         if (!player1.isKO && !player2.isKO) {
             if (player1.position.x < player2.position.x) { player1.side = 'left'; player2.side = 'right'; }
@@ -571,7 +586,7 @@ function animate() {
         player1.isBlocking = keys.KeyS.pressed && player1.isGrounded;
         player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
 
-        // Move P1
+        // P1 Move
         player1.velocity.x = 0;
         if (player1.isCharging) {
             player1.velocity.x = player1.side === 'left' ? 16 : -16;
@@ -584,7 +599,7 @@ function animate() {
             else if (keys.KeyD.pressed) player1.velocity.x = 6;
         }
 
-        // Move P2
+        // P2 Move
         player2.velocity.x = 0;
         if (player2.isCharging) {
             player2.velocity.x = player2.side === 'left' ? 16 : -16;
@@ -596,7 +611,7 @@ function animate() {
             if (keys.ArrowLeft.pressed) player2.velocity.x = -6; else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
         }
 
-        // --- HOST FX LOGIC ---
+        // FX Ulti
         [player1, player2].forEach(p => {
             let enemy = p === player1 ? player2 : player1;
             if (p.fxClockActive) {
@@ -611,17 +626,17 @@ function animate() {
             }
         });
 
-        // --- UBER & KOTLINEUR PASSIVE ULTI DAMAGE ---
         if (player1.characterName === 'uber' && player1.isAttacking && player1.attackType === 'ulti' && !player2.isGrounded) dealUltiDamage(player2, 0.4, 0);
         if (player2.characterName === 'uber' && player2.isAttacking && player2.attackType === 'ulti' && !player1.isGrounded) dealUltiDamage(player1, 0.4, 0);
         if (player1.characterName === 'kotlineur' && player1.isAttacking && player1.attackType === 'ulti' && (player2.position.x < 350 || (player2.position.x + player2.width) > 674)) dealUltiDamage(player2, 0.4, 0);
         if (player2.characterName === 'kotlineur' && player2.isAttacking && player2.attackType === 'ulti' && (player1.position.x < 350 || (player1.position.x + player1.width) > 674)) dealUltiDamage(player1, 0.4, 0);
 
-        // Host ends tick by broadcasting state
-        conn.send({
-            type: 'gameState',
-            state: { p1: serializePlayer(player1), p2: serializePlayer(player2), timer, gameOver }
-        });
+        if (!isLocalMode && conn) {
+            conn.send({
+                type: 'gameState',
+                state: { p1: serializePlayer(player1), p2: serializePlayer(player2), timer, gameOver }
+            });
+        }
 
         if ((player1.health <= 0 || player2.health <= 0) && !gameOver) {
             if (player1.health <= 0) player1.isKO = true; if (player2.health <= 0) player2.isKO = true;
@@ -629,7 +644,6 @@ function animate() {
         }
     }
 
-    // --- VISUAL DRAWING (Both Host & Client) ---
     [player1, player2].forEach(p => {
         if (p.fxClockActive) {
             ctx.fillStyle = '#222'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
@@ -639,15 +653,15 @@ function animate() {
             ctx.moveTo(canvas.width / 2, p.fxClockY); ctx.lineTo(canvas.width / 2 + 30, p.fxClockY + 15); ctx.stroke();
         }
         if (p.characterName === 'uber' && p.isAttacking && p.attackType === 'ulti') {
-            ctx.fillStyle = '#00ff66'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'left';
+            ctx.fillStyle = '#00ff66'; ctx.font = 'bold 14px inherit'; ctx.textAlign = 'left';
             for (let i = 0; i < 5; i++) {
-                ctx.fillText("FATAL ERROR: WINDOWS DETECTED. PURGING BASE...", (Date.now() / 2 + i * 200) % canvas.width, 60 + i * 50);
-                ctx.fillText("sudo rm -rf /mnt/c/Windows/System32", (canvas.width - (Date.now() / 3 + i * 150) % canvas.width), 85 + i * 50);
+                ctx.fillText("ERREUR FATALE: WINDOWS DETECTÉ...", (Date.now() / 2 + i * 200) % canvas.width, 60 + i * 50);
+                ctx.fillText("sudo rm -rf /mnt/c/Windows", (canvas.width - (Date.now() / 3 + i * 150) % canvas.width), 85 + i * 50);
             }
         }
         if (p.characterName === 'kotlineur' && p.isAttacking && p.attackType === 'ulti') {
             ctx.fillStyle = 'rgba(255, 0, 85, 0.18)'; ctx.fillRect(0, 0, 350, groundY); ctx.fillRect(674, 0, canvas.width - 674, groundY);
-            ctx.fillStyle = '#ff0055'; ctx.font = 'bold 18px Courier New'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#ff0055'; ctx.font = 'bold 18px inherit'; ctx.textAlign = 'center';
             ctx.fillText("⚠️ COIN EN FLAMMES ⚠️", 175, 80); ctx.fillText("⚠️ COIN EN FLAMMES ⚠️", 849, 80);
         }
         if (p.benitoHealTimer > 0) {
@@ -659,42 +673,80 @@ function animate() {
     ctx.save();
     if (player1.ultiPhraseTimer > 0) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; ctx.fillRect(0, 160, canvas.width, 55);
-        ctx.fillStyle = player1.color; ctx.font = 'bold 22px Courier New'; ctx.textAlign = 'center';
+        ctx.fillStyle = player1.color; ctx.font = 'bold 22px inherit'; ctx.textAlign = 'center';
         ctx.fillText(formatCharacterName(p1Choice) + " : \"" + player1.ultiPhrase + "\"", canvas.width / 2, 195);
     }
     if (player2.ultiPhraseTimer > 0) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; ctx.fillRect(0, 240, canvas.width, 55);
-        ctx.fillStyle = player2.color; ctx.font = 'bold 22px Courier New'; ctx.textAlign = 'center';
+        ctx.fillStyle = player2.color; ctx.font = 'bold 22px inherit'; ctx.textAlign = 'center';
         ctx.fillText(formatCharacterName(p2Choice) + " : \"" + player2.ultiPhrase + "\"", canvas.width / 2, 275);
     }
     ctx.restore();
 }
 
-// Reset all keys when window loses focus (prevents stuck keys on alt-tab)
 window.addEventListener('blur', () => {
-    if (conn) resetAllKeys();
+    resetAllKeys();
 });
 
-// Input handling router
+// INTERCEPTION CLAVIER POUR LE MAPPING LIGNE / LOCAL
 window.addEventListener('keydown', (e) => {
-    if (gameOver || !gameActive || !conn) return;
-    e.preventDefault(); // prevent arrow keys scrolling the page
-    if (isHost) handleInput(e.key, e.code, true);
-    else conn.send({ type: 'keydown', key: e.key, code: e.code });
+    if (gameOver || !gameActive) return;
+    e.preventDefault();
+
+    if (isLocalMode) {
+        // En local, on envoie la touche telle quelle à l'hôte
+        handleInput(e.key, e.code, true);
+    } else {
+        if (isHost) {
+            // L'hôte en ligne ne lit que ses propres touches ZQSD (p1Codes)
+            const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
+            if (p1Codes.includes(e.code)) handleInput(e.key, e.code, true);
+        } else if (conn) {
+            // Le client en ligne MAP ses touches ZQSD vers les Flèches avant d'envoyer
+            let mappedCode = e.code;
+            if (['KeyW', 'KeyZ'].includes(e.code)) mappedCode = 'ArrowUp';
+            if (['KeyS'].includes(e.code)) mappedCode = 'ArrowDown';
+            if (['KeyA', 'KeyQ'].includes(e.code)) mappedCode = 'ArrowLeft';
+            if (['KeyD'].includes(e.code)) mappedCode = 'ArrowRight';
+            if (['KeyF'].includes(e.code)) mappedCode = 'ShiftRight';
+            if (['KeyG'].includes(e.code)) mappedCode = 'ControlRight';
+            if (['KeyE'].includes(e.code)) mappedCode = 'Enter';
+
+            const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
+            if (p2Codes.includes(mappedCode)) {
+                conn.send({ type: 'keydown', key: e.key, code: mappedCode });
+            }
+        }
+    }
 });
 
 window.addEventListener('keyup', (e) => {
-    if (!conn) return;
-    if (isHost) handleInput(e.key, e.code, false);
-    else conn.send({ type: 'keyup', key: e.key, code: e.code });
+    if (isLocalMode) {
+        handleInput(e.key, e.code, false);
+    } else {
+        if (isHost) {
+            const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
+            if (p1Codes.includes(e.code)) handleInput(e.key, e.code, false);
+        } else if (conn) {
+            let mappedCode = e.code;
+            if (['KeyW', 'KeyZ'].includes(e.code)) mappedCode = 'ArrowUp';
+            if (['KeyS'].includes(e.code)) mappedCode = 'ArrowDown';
+            if (['KeyA', 'KeyQ'].includes(e.code)) mappedCode = 'ArrowLeft';
+            if (['KeyD'].includes(e.code)) mappedCode = 'ArrowRight';
+            if (['KeyF'].includes(e.code)) mappedCode = 'ShiftRight';
+            if (['KeyG'].includes(e.code)) mappedCode = 'ControlRight';
+            if (['KeyE'].includes(e.code)) mappedCode = 'Enter';
+
+            const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
+            if (p2Codes.includes(mappedCode)) {
+                conn.send({ type: 'keyup', key: e.key, code: mappedCode });
+            }
+        }
+    }
 });
 
-// Centralized input processing (Host Only)
-// Uses e.code (physical key position) to be fully layout-agnostic (AZERTY/QWERTY/etc.)
-// P1: WASD zone  |  P2: Arrow keys zone  — zero overlap possible
+// Le moteur ne change pas. Il croit recevoir des flèches directionnelles de P2 !
 function handleInput(keyString, codeString, isKeyDown) {
-
-    // ── PLAYER 1 (Host local — physical WASD zone) ──────────────────────────
     const p1Codes = ['KeyA','KeyD','KeyQ','KeyW','KeyZ','KeyS','KeyF','KeyG','KeyE'];
     if (p1Codes.includes(codeString)) {
         const canP1Act = !player1.isStunned && !player1.isKO;
@@ -716,7 +768,6 @@ function handleInput(keyString, codeString, isKeyDown) {
         }
     }
 
-    // ── PLAYER 2 (Client remote — Arrow keys zone) ──────────────────────────
     const p2Codes = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','ShiftRight','ControlRight','Enter','NumpadEnter'];
     if (p2Codes.includes(codeString)) {
         const canP2Act = !player2.isStunned && !player2.isKO;

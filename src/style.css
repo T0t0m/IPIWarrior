@@ -6,7 +6,8 @@
 
 body {
     background-color: #1a1a1a;
-    font-family: 'Courier New', Courier, monospace;
+    /* Application de la typo pixel/arcade demandée */
+    font-family: 'Sixtyfour Convergence', 'Courier New', Courier, monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -18,7 +19,7 @@ body {
 
 h1 {
     margin-bottom: 10px;
-    text-shadow: 0 0 10px #00d2ff;
+    text-shadow: 4px 4px 0px #00d2ff;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
@@ -37,28 +38,32 @@ h1 {
 }
 
 .side-controls {
-    background: linear-gradient(to bottom, #222, #111);
+    background: #111;
     padding: 20px;
-    border-radius: 10px;
-    border: 2px solid #444;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-    min-width: 170px;
+    border: 4px solid #444; /* Bords stricts pixelisés */
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 1);
+    min-width: 190px;
     text-align: center;
 }
 
 .side-controls h3 {
-    font-size: 22px;
+    font-size: 16px;
     margin-bottom: 20px;
-    text-shadow: 0 0 8px currentColor;
+    text-shadow: 2px 2px 0px #000;
+    line-height: 1.5;
+}
+
+.side-controls small {
+    font-size: 10px;
+    color: #aaa;
 }
 
 .control-box p {
     background: #1a1a24;
     padding: 12px 10px;
     margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #333;
-    font-size: 14px;
+    border: 2px solid #333;
+    font-size: 12px;
     color: #ccc;
     line-height: 1.4;
 }
@@ -69,7 +74,7 @@ h1 {
 
 .control-box p strong {
     color: #fff;
-    font-size: 16px;
+    font-size: 14px;
     display: inline-block;
     margin-bottom: 5px;
     text-transform: uppercase;
@@ -92,15 +97,56 @@ h1 {
     max-width: 1024px;
     height: auto;
     aspect-ratio: 1024 / 576;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-    border: 4px solid #333;
+    box-shadow: 10px 10px 0px rgba(0, 0, 0, 1);
+    border: 6px solid #555;
     background: linear-gradient(to bottom, #2a2a35 0%, #1a1a24 100%);
+    image-rendering: pixelated; /* Look rétro */
 }
 
 canvas {
     display: block;
     width: 100%;
     height: 100%;
+}
+
+/* Nouveau Menu Principal */
+#main-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+}
+
+#main-menu h2 {
+    font-size: 48px;
+    text-shadow: 4px 4px 0 #ff0055, -4px -4px 0 #00d2ff;
+    margin-bottom: 50px;
+}
+
+.menu-btn {
+    font-family: inherit;
+    font-size: 20px;
+    padding: 15px 30px;
+    margin: 15px;
+    cursor: pointer;
+    background: #222;
+    color: #fff;
+    border: 4px solid #fff;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.menu-btn:hover {
+    background: #fff;
+    color: #000;
+    transform: scale(1.05);
 }
 
 /* Character Select Menu Overlay */
@@ -119,14 +165,14 @@ canvas {
 }
 
 #character-select h2 {
-    font-size: 48px;
+    font-size: 24px;
     margin-bottom: 30px;
-    text-shadow: 0 0 15px #fff;
+    text-shadow: 2px 2px 0px #ffcc00;
 }
 
 .selection-area {
     display: flex;
-    width: 80%;
+    width: 90%;
     justify-content: space-around;
     margin-bottom: 40px;
 }
@@ -135,13 +181,12 @@ canvas {
     text-align: center;
     background: #222;
     padding: 20px;
-    border-radius: 10px;
-    border: 2px solid #444;
+    border: 4px solid #444;
 }
 
 .player-select h3 {
     margin-bottom: 15px;
-    font-size: 24px;
+    font-size: 16px;
 }
 
 .portrait-container {
@@ -158,7 +203,6 @@ canvas {
     height: 80px;
     cursor: pointer;
     border: 4px solid transparent;
-    border-radius: 10px;
     background: #333;
     object-fit: cover;
     transition: transform 0.1s;
@@ -168,6 +212,7 @@ canvas {
     justify-content: center;
     font-size: 12px;
     text-align: center;
+    image-rendering: pixelated;
 }
 
 .portrait:hover {
@@ -176,27 +221,25 @@ canvas {
 
 .selected-p1 {
     border-color: #ff0055;
-    box-shadow: 0 0 15px #ff0055;
+    box-shadow: 4px 4px 0px #ff0055;
     background-color: #550011;
 }
 
 .selected-p2 {
     border-color: #00d2ff;
-    box-shadow: 0 0 15px #00d2ff;
+    box-shadow: 4px 4px 0px #00d2ff;
     background-color: #002233;
 }
 
 #start-fight-btn {
     padding: 15px 40px;
     font-family: inherit;
-    font-size: 32px;
-    font-weight: bold;
+    font-size: 24px;
     background-color: #fff;
     color: #000;
-    border: none;
+    border: 4px solid #000;
     cursor: pointer;
-    border-radius: 5px;
-    box-shadow: 0 0 20px #fff;
+    box-shadow: 4px 4px 0 #fff;
     transition: all 0.2s;
 }
 
@@ -234,15 +277,7 @@ canvas {
     width: 100%;
     height: 30px;
     background-color: #444;
-    border: 2px solid #fff;
-}
-
-#p1-health-container {
-    transform: skewX(-10deg);
-}
-
-#p2-health-container {
-    transform: skewX(10deg);
+    border: 4px solid #fff;
 }
 
 .health-bar {
@@ -255,30 +290,22 @@ canvas {
 
 #p1-health {
     right: 0;
-    background: linear-gradient(90deg, #ff0055, #ff5500);
+    background: #ff0055;
 }
 
 #p2-health {
     left: 0;
-    background: linear-gradient(90deg, #00d2ff, #0066ff);
+    background: #00d2ff;
 }
 
 /* --- Barres d'Ultimate --- */
 .ulti-bar-container {
     position: relative;
     width: 90%;
-    height: 10px;
+    height: 15px;
     background-color: #222;
-    border: 1px solid #fff;
+    border: 2px solid #fff;
     margin-top: 5px;
-}
-
-#p1-ulti-container {
-    transform: skewX(-10deg);
-}
-
-#p2-ulti-container {
-    transform: skewX(10deg);
 }
 
 .ulti-bar {
@@ -291,34 +318,29 @@ canvas {
 
 #p1-ulti {
     right: 0;
-    background: linear-gradient(90deg, #ffcc00, #ffea00);
-    box-shadow: 0 0 10px #ffcc00;
+    background: #ffcc00;
 }
 
 #p2-ulti {
     left: 0;
-    background: linear-gradient(90deg, #ffcc00, #ffea00);
-    box-shadow: 0 0 10px #ffcc00;
+    background: #ffcc00;
 }
 
 .char-name {
     margin-top: 8px;
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: 0 0 8px currentColor;
+    text-shadow: 2px 2px 0 #000;
 }
 
 #timer {
     background-color: #000;
-    border: 2px solid #fff;
-    font-size: 32px;
-    font-weight: bold;
+    border: 4px solid #fff;
+    font-size: 24px;
     padding: 5px 15px;
-    width: 70px;
+    width: 80px;
     text-align: center;
-    transform: skewX(-5deg);
 }
 
 /* Game Over / Restart Screen */
@@ -331,11 +353,10 @@ canvas {
     display: none;
     align-items: center;
     justify-content: center;
-    font-size: 64px;
-    font-weight: bold;
+    font-size: 32px;
     color: #fff;
-    background-color: rgba(0, 0, 0, 0.7);
-    text-shadow: 0 0 20px #000;
+    background-color: rgba(0, 0, 0, 0.8);
+    text-shadow: 4px 4px 0 #000;
     flex-direction: column;
     z-index: 8;
 }
@@ -344,13 +365,11 @@ canvas {
     margin-top: 20px;
     padding: 10px 20px;
     font-family: inherit;
-    font-size: 20px;
+    font-size: 16px;
     background-color: #00d2ff;
     color: #000;
-    font-weight: bold;
-    border: none;
+    border: 4px solid #000;
     cursor: pointer;
-    border-radius: 5px;
     pointer-events: auto;
 }
 
@@ -365,10 +384,9 @@ canvas {
 }
 
 .stage-select h3 {
-    font-size: 20px;
+    font-size: 16px;
     margin-bottom: 12px;
-    text-shadow: 0 0 10px #fff;
-    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 #000;
 }
 
 .bg-container {
@@ -381,11 +399,11 @@ canvas {
     width: 140px;
     height: 80px;
     cursor: pointer;
-    border: 3px solid transparent;
-    border-radius: 6px;
+    border: 4px solid transparent;
     background: #333;
     object-fit: cover;
-    transition: transform 0.1s, border-color 0.2s;
+    transition: transform 0.1s;
+    image-rendering: pixelated;
 }
 
 .bg-portrait:hover {
@@ -394,85 +412,9 @@ canvas {
 
 .selected-bg {
     border-color: #00ff66;
-    box-shadow: 0 0 15px #00ff66;
+    box-shadow: 4px 4px 0 #00ff66;
 }
 
-/* =========================================
-   RESPONSIVE DESIGN (Tablettes & Portables)
-   ========================================= */
-
-@media (max-width: 1150px) {
-    #display-text {
-        font-size: 48px;
-    }
-
-    #character-select h2 {
-        font-size: 32px;
-        margin-bottom: 15px;
-    }
-
-    .portrait {
-        width: 60px;
-        height: 60px;
-    }
-
-    .portrait-container {
-        max-width: 220px;
-    }
-
-    #start-fight-btn {
-        font-size: 24px;
-        padding: 10px 20px;
-    }
-
-    .health-bar-container {
-        height: 20px;
-    }
-
-    #timer {
-        font-size: 24px;
-        width: 50px;
-        padding: 3px 10px;
-    }
-
-    .char-name {
-        font-size: 16px;
-    }
-
-    .bg-portrait {
-        width: 100px;
-        height: 60px;
-    }
-    .stage-select h3 {
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 850px) {
-    .side-controls {
-        width: 100%;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .side-controls h3 {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
-    .control-box {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .control-box p {
-        margin-bottom: 0;
-    }
-}
 /* --- Network Menu --- */
 #network-menu {
     position: absolute;
@@ -489,9 +431,9 @@ canvas {
 }
 
 #network-menu h2 {
-    font-size: 48px;
+    font-size: 32px;
     margin-bottom: 40px;
-    text-shadow: 0 0 15px #00ff66;
+    text-shadow: 4px 4px 0 #00ff66;
 }
 
 .net-actions {
@@ -505,14 +447,13 @@ canvas {
 .net-box {
     background: #222;
     padding: 30px;
-    border-radius: 10px;
-    border: 2px solid #444;
+    border: 4px solid #444;
     text-align: center;
     min-width: 300px;
 }
 
 .net-box h3 {
-    font-size: 24px;
+    font-size: 20px;
     margin-bottom: 20px;
     color: #fff;
 }
@@ -522,20 +463,20 @@ canvas {
     padding: 10px;
     margin-bottom: 20px;
     background: #111;
-    border: 1px solid #555;
+    border: 2px solid #555;
     color: #fff;
-    font-size: 16px;
+    font-family: inherit;
+    font-size: 14px;
     text-align: center;
 }
 
 .net-box button {
     padding: 12px 25px;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 16px;
+    font-family: inherit;
     cursor: pointer;
     background: #00d2ff;
-    border: none;
-    border-radius: 5px;
+    border: 4px solid #000;
     color: #000;
     transition: 0.2s;
 }
@@ -547,14 +488,30 @@ canvas {
 
 #room-id-display {
     margin-top: 20px;
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 18px;
     color: #00ff66;
-    letter-spacing: 2px;
 }
 
 #join-status {
     margin-top: 15px;
     color: #ff3377;
-    font-weight: bold;
+}
+
+@media (max-width: 1150px) {
+    #main-menu h2 { font-size: 32px; }
+    .menu-btn { font-size: 16px; }
+    #display-text { font-size: 24px; }
+    #character-select h2 { font-size: 20px; margin-bottom: 15px; }
+    .portrait { width: 60px; height: 60px; }
+    #start-fight-btn { font-size: 18px; padding: 10px 20px; }
+    #timer { font-size: 16px; width: 60px; padding: 3px 10px; }
+    .char-name { font-size: 12px; }
+    .bg-portrait { width: 100px; height: 60px; }
+}
+
+@media (max-width: 850px) {
+    .side-controls { width: 100%; display: flex; justify-content: space-around; flex-wrap: wrap; }
+    .side-controls h3 { width: 100%; margin-bottom: 10px; }
+    .control-box { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .control-box p { margin-bottom: 0; }
 }
