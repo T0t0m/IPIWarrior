@@ -14,8 +14,8 @@ let gameActive = false;
 
 // Track key states
 const keys = {
-    a: { pressed: false }, d: { pressed: false }, w: { pressed: false },
-    ArrowLeft: { pressed: false }, ArrowRight: { pressed: false }, ArrowUp: { pressed: false }
+    a: { pressed: false }, d: { pressed: false }, w: { pressed: false }, s: { pressed: false },
+    ArrowLeft: { pressed: false }, ArrowRight: { pressed: false }, ArrowUp: { pressed: false }, ArrowDown: { pressed: false }
 };
 
 // UI Menu Logic
@@ -54,7 +54,8 @@ class Fighter {
         // Zone d'attaque circulaire
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
-            radius: 25
+            width: 100,
+            height: 40
         };
     }
 
@@ -123,9 +124,7 @@ class Fighter {
         // Visuel de l'Attack Box en cercle
         if (this.isAttacking) {
             ctx.fillStyle = this.attackType === 'punch' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 215, 0, 0.3)';
-            ctx.beginPath();
-            ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
         }
     }
 
@@ -141,10 +140,14 @@ class Fighter {
             this.attackBox.position.y = this.position.y + 110;
         }
 
-        if (this.side === 'left') {
-            this.attackBox.position.x = this.position.x + this.width + 10;
-        } else {
-            this.attackBox.position.x = this.position.x - 10;
+        if (this.attackType === 'punch') {
+            this.attackBox.position.y = this.position.y + 35;
+            this.attackBox.width = 60;
+            this.attackBox.height = 30;
+        } else if (this.attackType === 'kick') {
+            this.attackBox.position.y = this.position.y + 75;
+            this.attackBox.width = 70;
+            this.attackBox.height = 40;
         }
 
         this.position.x += this.velocity.x;
@@ -357,6 +360,7 @@ function animate() {
 window.addEventListener('keydown', (event) => {
     if (gameOver || !gameActive) return;
 
+    // On convertit en minuscule pour simplifier les conditions
     const key = event.key.toLowerCase();
 
     switch (key) {
@@ -365,11 +369,11 @@ window.addEventListener('keydown', (event) => {
             keys.d.pressed = true; 
             break;
         case 'a': 
-        case 'q': 
+        case 'q': // Support AZERTY (gauche)
             keys.a.pressed = true; 
             break;
         case 'w': 
-        case 'z': 
+        case 'z': // Support AZERTY (saut)
             if (player1.isGrounded) player1.velocity.y = -18; 
             break;
         case 'f': 
@@ -391,6 +395,7 @@ window.addEventListener('keydown', (event) => {
             break;
     }
 
+    // Gestion avec event.code pour les touches spéciales (Shift/Ctrl)
     if (event.code === 'ShiftRight') player2.attack('punch');
     if (event.code === 'ControlRight') player2.attack('kick');
 });
@@ -403,7 +408,7 @@ window.addEventListener('keyup', (event) => {
             keys.d.pressed = false; 
             break;
         case 'a': 
-        case 'q': 
+        case 'q': // Support AZERTY
             keys.a.pressed = false; 
             break;
         case 'arrowright': 
@@ -415,4 +420,5 @@ window.addEventListener('keyup', (event) => {
     }
 });
 
+// Start background loop, but keep game paused until "FIGHT!" is clicked
 animate();
