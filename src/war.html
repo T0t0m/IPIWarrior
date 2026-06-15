@@ -26,32 +26,45 @@
         </div>
 
         <div id="game-container">
+
             <div id="character-select">
                 <h2>SELECT YOUR FIGHTERS</h2>
                 <div class="selection-area">
-                    <div class="player-select">
+
+                    <div class="player-select" id="p1-selection">
                         <h3 class="p1-color">PLAYER 1 (RED)</h3>
                         <div class="portrait-container">
                             <img src="../asset/character/fx.png" alt="FX" class="portrait selected-p1" id="p1-fx"
-                                onclick="selectChar(1, 'fx.png', 'p1-fx')">
+                                onclick="selectChar(1, '../asset/character/fx.png', 'p1-fx')">
                             <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait"
-                                id="p1-kotlineur" onclick="selectChar(1, 'kotlineur.png', 'p1-kotlineur')">
+                                id="p1-kotlineur"
+                                onclick="selectChar(1, '../asset/character/kotlineur.png', 'p1-kotlineur')">
                             <img src="../asset/character/etienne.png" alt="Etienne" class="portrait" id="p1-etienne"
-                                onclick="selectChar(1, 'etienne.png', 'p1-etienne')">
+                                onclick="selectChar(1, '../asset/character/etienne.png', 'p1-etienne')">
+                            <img src="../asset/character/benito.png" alt="Benito" class="portrait" id="p1-benito"
+                                onclick="selectChar(1, '../asset/character/benito.png', 'p1-benito')">
+                            <img src="../asset/character/uber.png" alt="Uber" class="portrait" id="p1-uber"
+                                onclick="selectChar(1, '../asset/character/uber.png', 'p1-uber')">
                         </div>
                     </div>
 
-                    <div class="player-select">
+                    <div class="player-select" id="p2-selection">
                         <h3 class="p2-color">PLAYER 2 (BLUE)</h3>
                         <div class="portrait-container">
                             <img src="../asset/character/fx.png" alt="FX" class="portrait" id="p2-fx"
-                                onclick="selectChar(2, 'fx.png', 'p2-fx')">
+                                onclick="selectChar(2, '../asset/character/fx.png', 'p2-fx')">
                             <img src="../asset/character/kotlineur.png" alt="Kotlineur" class="portrait selected-p2"
-                                id="p2-kotlineur" onclick="selectChar(2, 'kotlineur.png', 'p2-kotlineur')">
+                                id="p2-kotlineur"
+                                onclick="selectChar(2, '../asset/character/kotlineur.png', 'p2-kotlineur')">
                             <img src="../asset/character/etienne.png" alt="Etienne" class="portrait" id="p2-etienne"
-                                onclick="selectChar(2, 'etienne.png', 'p2-etienne')">
+                                onclick="selectChar(2, '../asset/character/etienne.png', 'p2-etienne')">
+                            <img src="../asset/character/benito.png" alt="Benito" class="portrait" id="p2-benito"
+                                onclick="selectChar(2, '../asset/character/benito.png', 'p2-benito')">
+                            <img src="../asset/character/uber.png" alt="Uber" class="portrait" id="p2-uber"
+                                onclick="selectChar(2, '../asset/character/uber.png', 'p2-uber')">
                         </div>
                     </div>
+
                 </div>
                 <button id="start-fight-btn" onclick="startGame()">FIGHT!</button>
             </div>

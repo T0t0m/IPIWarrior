@@ -8,8 +8,8 @@ const gravity = 0.7;
 const groundY = 480;
 
 // Default Selections
-let p1Choice = 'fx.png';
-let p2Choice = 'kotlineur.png';
+let p1Choice = '../asset/character/fx.png';
+let p2Choice = '../asset/character/kotlineur.png';
 let gameActive = false;
 
 // Track key states
@@ -18,9 +18,9 @@ const keys = {
     ArrowLeft: { pressed: false }, ArrowRight: { pressed: false }, ArrowUp: { pressed: false }, ArrowDown: { pressed: false }
 };
 
-// Formater le nom du personnage
+// Formater le nom du personnage (CORRIGÉ)
 function formatCharacterName(filename) {
-    let rawName = filename.replace('.png', '');
+    let rawName = filename.split('/').pop().replace('.png', '');
     if (rawName.toLowerCase() === 'fx') return 'FX';
     return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 }
@@ -29,15 +29,13 @@ function formatCharacterName(filename) {
 function selectChar(playerNum, imageSrc, elementId) {
     if (playerNum === 1) {
         p1Choice = imageSrc;
-        document.getElementById('p1-fx').classList.remove('selected-p1');
-        document.getElementById('p1-kotlineur').classList.remove('selected-p1');
-        document.getElementById('p1-etienne').classList.remove('selected-p1');
+        const portraits = document.querySelectorAll('#p1-selection .portrait');
+        portraits.forEach(p => p.classList.remove('selected-p1'));
         document.getElementById(elementId).classList.add('selected-p1');
     } else {
         p2Choice = imageSrc;
-        document.getElementById('p2-fx').classList.remove('selected-p2');
-        document.getElementById('p2-kotlineur').classList.remove('selected-p2');
-        document.getElementById('p2-etienne').classList.remove('selected-p2');
+        const portraits = document.querySelectorAll('#p2-selection .portrait');
+        portraits.forEach(p => p.classList.remove('selected-p2'));
         document.getElementById(elementId).classList.add('selected-p2');
     }
 }
@@ -59,14 +57,21 @@ class Fighter {
         this.cooldown = 0;
         this.headImage = new Image();
 
+        // Stats avancées
+        this.perfectBlockWindow = 0;
+        this.isStunned = false;
+        this.stunTimer = 0;
+        this.isKO = false;
+
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
             radius: 25
         };
     }
 
+    // (CORRIGÉ) L'image envoyée contient déjà le chemin
     setHead(imageSrc) {
-        this.headImage.src = '../asset/character/' + imageSrc;
+        this.headImage.src = imageSrc;
     }
 
     draw() {
@@ -74,11 +79,33 @@ class Fighter {
         const centerX = this.position.x + this.width / 2;
         const topY = this.position.y;
 
+        // --- Ombre dynamique au sol ---
+        const shadowWidth = this.isGrounded ? 50 : 30 + (this.position.y / groundY) * 20;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(centerX, groundY + 5, shadowWidth, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.save();
+
+        // KO Rotation
+        if (this.isKO) {
+            ctx.translate(centerX, topY + 130);
+            ctx.rotate(this.side === 'left' ? -Math.PI / 2 : Math.PI / 2);
+            ctx.translate(-centerX, -(topY + 130));
+        }
+
         ctx.strokeStyle = this.color;
         ctx.fillStyle = this.color;
         ctx.lineWidth = 8;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+
+        // Clignotement Stun
+        if (this.isStunned && Math.floor(Date.now() / 100) % 2 === 0) {
+            ctx.strokeStyle = '#ffcc00';
+            ctx.fillStyle = '#ffcc00';
+        }
 
         // Head
         if (this.headImage.complete && this.headImage.naturalHeight !== 0) {
@@ -97,13 +124,19 @@ class Fighter {
 
         // Legs
         ctx.beginPath();
-        if (this.isAttacking && this.attackType === 'kick') {
+        if (this.isKO) {
+            ctx.moveTo(centerX, topY + 85);
+            ctx.lineTo(centerX - 10, topY + 130);
+            ctx.moveTo(centerX, topY + 85);
+            ctx.lineTo(centerX + 10, topY + 130);
+        } else if (this.isAttacking && this.attackType === 'kick') {
             ctx.moveTo(centerX, topY + 85);
             ctx.lineTo(centerX - (20 * dir), topY + 130);
             ctx.moveTo(centerX, topY + 85);
             ctx.lineTo(centerX + (55 * dir), topY + 95);
         } else {
             let legOffset = this.velocity.x !== 0 ? Math.sin(Date.now() / 100) * 15 : 15;
+            if (!this.isGrounded) legOffset = 5; // Jambes resserrées en l'air
             ctx.moveTo(centerX, topY + 85);
             ctx.lineTo(centerX - legOffset, topY + 130);
             ctx.moveTo(centerX, topY + 85);
@@ -113,12 +146,18 @@ class Fighter {
 
         // Arms
         ctx.beginPath();
-        if (this.isAttacking && this.attackType === 'punch') {
+        if (this.isKO) {
+            ctx.moveTo(centerX, topY + 50);
+            ctx.lineTo(centerX - 20, topY + 40);
+            ctx.moveTo(centerX, topY + 50);
+            ctx.lineTo(centerX + 20, topY + 40);
+        } else if (this.isAttacking && this.attackType === 'punch') {
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX - (20 * dir), topY + 75);
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 50);
         } else if (this.isBlocking) {
+            // Posture de garde
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (15 * dir), topY + 25);
             ctx.moveTo(centerX, topY + 50);
@@ -131,17 +170,53 @@ class Fighter {
         }
         ctx.stroke();
 
-        // Visuel de l'Attack Box en cercle
+        // Hitbox Visuelle (Debug / Feedback)
         if (this.isAttacking) {
             ctx.fillStyle = this.attackType === 'punch' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 215, 0, 0.3)';
             ctx.beginPath();
             ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2);
             ctx.fill();
         }
+
+        // Effet Bouclier (Block)
+        if (this.isBlocking && !this.isKO) {
+            ctx.lineWidth = 4;
+            if (this.perfectBlockWindow > 0) {
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(centerX + (25 * dir), topY + 55, 35, -Math.PI / 2, Math.PI / 2, dir < 0);
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)';
+                ctx.beginPath();
+                ctx.arc(centerX + (22 * dir), topY + 55, 28, -Math.PI / 2, Math.PI / 2, dir < 0);
+                ctx.stroke();
+            }
+        }
+
+        if (this.isStunned && !this.isKO) {
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('⚡ STUNNED ⚡', centerX - 45, topY - 30);
+        }
+
+        ctx.restore();
     }
 
     update() {
         this.draw();
+
+        if (this.perfectBlockWindow > 0) this.perfectBlockWindow--;
+        if (this.stunTimer > 0) {
+            this.stunTimer--;
+            if (this.stunTimer <= 0) this.isStunned = false;
+        }
+
+        if (this.side === 'left') {
+            this.attackBox.position.x = this.position.x + this.width;
+        } else {
+            this.attackBox.position.x = this.position.x - this.attackBox.width;
+        }
 
         if (this.attackType === 'punch') {
             this.attackBox.radius = 25;
@@ -186,7 +261,7 @@ class Fighter {
     }
 
     attack(type) {
-        if (this.isAttacking || this.cooldown > 0 || this.isBlocking) return;
+        if (this.isAttacking || this.isStunned || this.isKO || this.isBlocking || this.cooldown > 0) return;
 
         this.isAttacking = true;
         this.attackType = type;
@@ -236,6 +311,23 @@ function circleRectCollision(circle, rect) {
 
 function checkHit(attacker, defender) {
     if (circleRectCollision(attacker.attackBox, defender)) {
+
+        if (defender.isBlocking && !defender.isKO) {
+            if (defender.perfectBlockWindow > 0) {
+                attacker.isStunned = true;
+                attacker.stunTimer = 120;
+                attacker.velocity.x = 0;
+                attacker.isAttacking = false;
+                return;
+            } else {
+                let blockDamage = attacker.attackType === 'punch' ? 1 : 2;
+                defender.health -= blockDamage;
+                if (defender.health < 0) defender.health = 0;
+                updateHealthUI();
+                return;
+            }
+        }
+
         let damage = attacker.attackType === 'punch' ? 7 : 12;
         let knockbackDirection = attacker.side === 'left' ? 15 : -15;
 
@@ -249,12 +341,13 @@ function checkHit(attacker, defender) {
 
         defender.position.x += knockbackDirection;
 
-        if (defender === player2) {
-            document.getElementById('p2-health').style.width = defender.health + '%';
-        } else {
-            document.getElementById('p1-health').style.width = defender.health + '%';
-        }
+        updateHealthUI();
     }
+}
+
+function updateHealthUI() {
+    document.getElementById('p1-health').style.width = player1.health + '%';
+    document.getElementById('p2-health').style.width = player2.health + '%';
 }
 
 let timer = 99;
@@ -298,20 +391,25 @@ function startGame() {
     document.getElementById('character-select').style.display = 'none';
     document.getElementById('ui').style.display = 'flex';
 
+    // Reset complet Player 1
     player1.health = 100;
     player1.position = { x: 150, y: 0 };
-    player1.cooldown = 0;
-    player1.isAttacking = false;
+    player1.isKO = false;
+    player1.isStunned = false;
     player1.isBlocking = false;
+    player1.isAttacking = false;
+    player1.cooldown = 0;
 
+    // Reset complet Player 2
     player2.health = 100;
     player2.position = { x: 800, y: 0 };
-    player2.cooldown = 0;
-    player2.isAttacking = false;
+    player2.isKO = false;
+    player2.isStunned = false;
     player2.isBlocking = false;
+    player2.isAttacking = false;
+    player2.cooldown = 0;
 
-    document.getElementById('p1-health').style.width = '100%';
-    document.getElementById('p2-health').style.width = '100%';
+    updateHealthUI();
 
     timer = 99;
     document.getElementById('timer').innerText = timer;
@@ -349,31 +447,39 @@ function animate() {
     player1.update();
     player2.update();
 
-    if (player1.position.x < player2.position.x) {
-        player1.side = 'left';
-        player2.side = 'right';
-    } else {
-        player1.side = 'right';
-        player2.side = 'left';
+    if (!player1.isKO && !player2.isKO) {
+        if (player1.position.x < player2.position.x) {
+            player1.side = 'left';
+            player2.side = 'right';
+        } else {
+            player1.side = 'right';
+            player2.side = 'left';
+        }
     }
 
     player1.isBlocking = keys.s.pressed && player1.isGrounded;
     player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
 
     player1.velocity.x = 0;
-    if (!player1.isBlocking) {
+    if (!player1.isStunned && !player1.isKO && !player1.isBlocking) {
         if (keys.a.pressed) player1.velocity.x = -6;
         else if (keys.d.pressed) player1.velocity.x = 6;
     }
 
     player2.velocity.x = 0;
-    if (!player2.isBlocking) {
+    if (!player2.isStunned && !player2.isKO && !player2.isBlocking) {
         if (keys.ArrowLeft.pressed) player2.velocity.x = -6;
         else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
     }
 
     if ((player1.health <= 0 || player2.health <= 0) && !gameOver) {
-        determineWinner();
+        if (player1.health <= 0) player1.isKO = true;
+        if (player2.health <= 0) player2.isKO = true;
+
+        gameOver = true;
+        setTimeout(() => {
+            determineWinner();
+        }, 1500);
     }
 }
 
@@ -381,54 +487,68 @@ window.addEventListener('keydown', (event) => {
     if (gameOver || !gameActive) return;
 
     const key = event.key.toLowerCase();
+    const canP1Act = !player1.isStunned && !player1.isKO;
+    const canP2Act = !player2.isStunned && !player2.isKO;
 
     switch (key) {
-        // Joueur 1
+        // --- Joueur 1 ---
         case 'd':
-            keys.d.pressed = true;
+            if (canP1Act && !player1.isBlocking) keys.d.pressed = true;
             break;
         case 'a':
         case 'q':
-            keys.a.pressed = true;
+            if (canP1Act && !player1.isBlocking) keys.a.pressed = true;
             break;
         case 'w':
         case 'z':
-            if (player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
+            if (canP1Act && player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
             break;
         case 's':
-            keys.s.pressed = true;
+            if (canP1Act && player1.isGrounded && !player1.isAttacking) {
+                keys.s.pressed = true;
+                if (!player1.isBlocking) {
+                    player1.isBlocking = true;
+                    player1.perfectBlockWindow = 10;
+                }
+            }
             break;
         case 'f':
-            player1.attack('punch');
+            if (canP1Act) player1.attack('punch');
             break;
         case 'g':
-            player1.attack('kick');
+            if (canP1Act) player1.attack('kick');
             break;
 
-        // Joueur 2
+        // --- Joueur 2 ---
         case 'arrowright':
-            keys.ArrowRight.pressed = true;
+            if (canP2Act && !player2.isBlocking) keys.ArrowRight.pressed = true;
             break;
         case 'arrowleft':
-            keys.ArrowLeft.pressed = true;
+            if (canP2Act && !player2.isBlocking) keys.ArrowLeft.pressed = true;
             break;
         case 'arrowup':
-            if (player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
+            if (canP2Act && player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
             break;
         case 'arrowdown':
-            keys.ArrowDown.pressed = true;
+            if (canP2Act && player2.isGrounded && !player2.isAttacking) {
+                keys.ArrowDown.pressed = true;
+                if (!player2.isBlocking) {
+                    player2.isBlocking = true;
+                    player2.perfectBlockWindow = 10;
+                }
+            }
             break;
     }
 
-    if (event.code === 'ShiftRight') player2.attack('punch');
-    if (event.code === 'ControlRight') player2.attack('kick');
+    if (event.code === 'ShiftRight' && canP2Act) player2.attack('punch');
+    if (event.code === 'ControlRight' && canP2Act) player2.attack('kick');
 });
 
 window.addEventListener('keyup', (event) => {
     const key = event.key.toLowerCase();
 
     switch (key) {
-        // Joueur 1
+        // --- Joueur 1 ---
         case 'd':
             keys.d.pressed = false;
             break;
@@ -438,9 +558,10 @@ window.addEventListener('keyup', (event) => {
             break;
         case 's':
             keys.s.pressed = false;
+            player1.isBlocking = false;
             break;
 
-        // Joueur 2
+        // --- Joueur 2 ---
         case 'arrowright':
             keys.ArrowRight.pressed = false;
             break;
@@ -449,6 +570,7 @@ window.addEventListener('keyup', (event) => {
             break;
         case 'arrowdown':
             keys.ArrowDown.pressed = false;
+            player2.isBlocking = false;
             break;
     }
 });

@@ -136,6 +136,10 @@ h1 {
 .portrait-container {
     display: flex;
     gap: 15px;
+    flex-wrap: wrap; /* Permet le retour à la ligne */
+    justify-content: center;
+    max-width: 280px; /* Force la grille sur deux lignes */
+    margin: 0 auto;
 }
 
 .portrait {
