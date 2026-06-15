@@ -11,7 +11,7 @@ let p2Choice = '../asset/character/kotlineur.png';
 let bgChoice = '../asset/backgrounds/ipi.png';
 const bgImage = new Image();
 let gameActive = false;
-let isLocalMode = false; // Gère le mode Local ou Ligne
+let isLocalMode = false;
 
 const keys = {
     // P1
@@ -34,8 +34,6 @@ function startLocal() {
     document.getElementById('main-menu').style.display = 'none';
     document.getElementById('character-select').style.display = 'flex';
     document.getElementById('start-fight-btn').style.display = 'block';
-
-    updateControlsVisibility();
 }
 
 function showNetworkMenu() {
@@ -64,8 +62,6 @@ function hostGame() {
         document.getElementById('network-menu').style.display = 'none';
         document.getElementById('character-select').style.display = 'flex';
         document.getElementById('start-fight-btn').style.display = 'block';
-
-        updateControlsVisibility();
     });
 }
 
@@ -84,8 +80,6 @@ function joinGame() {
             document.getElementById('network-menu').style.display = 'none';
             document.getElementById('character-select').style.display = 'flex';
             document.getElementById('waiting-host-msg').style.display = 'block';
-
-            updateControlsVisibility();
         });
     });
 }
@@ -534,20 +528,19 @@ function determineWinner() {
     const display = document.getElementById('display-text');
     const msg = document.getElementById('win-message');
 
-    // NOUVEAU : Application des couleurs au texte de victoire en CSS !
-    msg.className = ''; // Réinitialise les couleurs
+    msg.className = '';
 
     if (player1.health === player2.health) {
         msg.innerText = "ÉGALITÉ !";
-        msg.classList.add('white-color'); // Blanc
+        msg.classList.add('white-color');
     }
     else if (player1.health > player2.health) {
         msg.innerText = formatCharacterName(p1Choice) + " GAGNE !";
-        msg.classList.add('p1-color'); // Rouge
+        msg.classList.add('p1-color');
     }
     else {
         msg.innerText = formatCharacterName(p2Choice) + " GAGNE !";
-        msg.classList.add('p2-color'); // Bleu
+        msg.classList.add('p2-color');
     }
 
     display.style.display = 'flex';
@@ -567,7 +560,6 @@ function startGame() {
     document.getElementById('p2-name').innerText = formatCharacterName(p2Choice);
     document.getElementById('character-select').style.display = 'none';
 
-    // NOUVEAU : On s'assure que les phrases d'ulti sont masquées au départ
     document.getElementById('p1-ulti-text').style.display = 'none';
     document.getElementById('p2-ulti-text').style.display = 'none';
 
@@ -710,7 +702,7 @@ function animate() {
         }
     });
 
-    // NOUVEAU : Affichage des phrases d'ultime via le DOM (pour forcer le CSS COLRv1)
+    // Affichage des phrases d'ultime via le DOM
     const p1UltiDiv = document.getElementById('p1-ulti-text');
     if (player1.ultiPhraseTimer > 0) {
         p1UltiDiv.innerText = formatCharacterName(p1Choice) + " : \"" + player1.ultiPhrase + "\"";
@@ -823,26 +815,6 @@ function handleInput(keyString, codeString, isKeyDown) {
             if (codeString === 'ArrowRight') keys.ArrowRight.pressed = false;
             if (codeString === 'ArrowLeft') keys.ArrowLeft.pressed = false;
             if (codeString === 'ArrowDown') { keys.ArrowDown.pressed = false; player2.isBlocking = false; }
-        }
-    }
-}
-
-// Fonction pour gérer l'affichage dynamique des contrôles
-function updateControlsVisibility() {
-    document.getElementById('controls-footer').style.display = 'flex';
-    const p1c = document.getElementById('p1-controls');
-    const p2c = document.getElementById('p2-controls');
-
-    if (isLocalMode) {
-        p1c.style.display = 'block';
-        p2c.style.display = 'block';
-    } else {
-        if (isHost) {
-            p1c.style.display = 'block';
-            p2c.style.display = 'none';
-        } else {
-            p1c.style.display = 'none';
-            p2c.style.display = 'block';
         }
     }
 }
