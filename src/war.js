@@ -10,6 +10,8 @@ const groundY = 480;
 // Default Selections
 let p1Choice = '../asset/character/fx.png';
 let p2Choice = '../asset/character/kotlineur.png';
+let bgChoice = '../asset/backgrounds/ipi.png'; // Choix par défaut du stage
+const bgImage = new Image();                   // Instance de l'image de fond
 let gameActive = false;
 
 // Track key states
@@ -25,7 +27,7 @@ function formatCharacterName(filename) {
     return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 }
 
-// UI Menu Logic
+// UI Menu Logic - Characters
 function selectChar(playerNum, imageSrc, elementId) {
     if (playerNum === 1) {
         p1Choice = imageSrc;
@@ -38,6 +40,14 @@ function selectChar(playerNum, imageSrc, elementId) {
         portraits.forEach(p => p.classList.remove('selected-p2'));
         document.getElementById(elementId).classList.add('selected-p2');
     }
+}
+
+// UI Menu Logic - Background
+function selectBg(imageSrc, elementId) {
+    bgChoice = imageSrc;
+    const stagePortraits = document.querySelectorAll('.stage-select .bg-portrait');
+    stagePortraits.forEach(bg => bg.classList.remove('selected-bg'));
+    document.getElementById(elementId).classList.add('selected-bg');
 }
 
 class Fighter {
@@ -187,7 +197,7 @@ class Fighter {
         }
         ctx.stroke();
 
-        // --- CORRECTION : Hitbox Visuelle Restaurée ---
+        // Hitbox Visuelle
         if (this.isAttacking) {
             if (this.attackType === 'punch') {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -457,6 +467,7 @@ function determineWinner() {
 function startGame() {
     player1.setHead(p1Choice);
     player2.setHead(p2Choice);
+    bgImage.src = bgChoice; // Charge l'image sélectionnée pour le combat
 
     document.getElementById('p1-name').innerText = formatCharacterName(p1Choice);
     document.getElementById('p2-name').innerText = formatCharacterName(p2Choice);
@@ -523,6 +534,15 @@ function animate() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Dessiner le fond choisi si disponible, sinon fallback sur une couleur unie
+    if (bgImage.complete && bgImage.naturalHeight !== 0) {
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.fillStyle = '#1a1a24';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Dessin du Sol
     ctx.fillStyle = '#111116';
     ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
     ctx.fillStyle = '#fff';
@@ -617,7 +637,7 @@ function animate() {
             ctx.fillText("FATAL ERROR: WINDOWS DETECTED. PURGING BASE...", (Date.now() / 2 + i * 200) % canvas.width, 60 + i * 50);
             ctx.fillText("sudo rm -rf /mnt/c/Windows/System32", (canvas.width - (Date.now() / 3 + i * 150) % canvas.width), 85 + i * 50);
         }
-        if (!player2.isGrounded) dealUltiDamage(player2, 0.4, 0); 
+        if (!player2.isGrounded) dealUltiDamage(player2, 0.4, 0);
     }
     if (player2.characterName === 'uber' && player2.isAttacking && player2.attackType === 'ulti') {
         ctx.fillStyle = '#00ff66'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'left';
@@ -704,7 +724,7 @@ window.addEventListener('keydown', (event) => {
             break;
         case 'f': if (canP1Act) player1.attack('punch'); break;
         case 'g': if (canP1Act) player1.attack('kick'); break;
-        case 'e': if (canP1Act) player1.attack('ulti'); break; 
+        case 'e': if (canP1Act) player1.attack('ulti'); break;
 
         // --- Joueur 2 ---
         case 'arrowright': if (canP2Act && !player2.isBlocking) keys.ArrowRight.pressed = true; break;
