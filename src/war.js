@@ -50,13 +50,6 @@ class Fighter {
         this.attackTimer = 0;
         this.headImage = new Image();
 
-        // Nouveaux états : Garde, Stun et KO
-        this.isBlocking = false;
-        this.perfectBlockWindow = 0; // Fenêtre de frames pour le perfect block
-        this.isStunned = false;
-        this.stunTimer = 0;
-        this.isKO = false;
-
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
             width: 100,
@@ -73,26 +66,11 @@ class Fighter {
         const centerX = this.position.x + this.width / 2;
         const topY = this.position.y;
 
-        ctx.save(); // Sauvegarde pour l'animation de KO (rotation)
-
-        // Animation de KO : Le personnage bascule sur le côté
-        if (this.isKO) {
-            ctx.translate(centerX, topY + 130); // Pivot au niveau des pieds
-            ctx.rotate(this.side === 'left' ? -Math.PI / 2 : Math.PI / 2);
-            ctx.translate(-centerX, -(topY + 130));
-        }
-
         ctx.strokeStyle = this.color;
         ctx.fillStyle = this.color;
         ctx.lineWidth = 8;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-
-        // Clignotement si étourdi (Stun)
-        if (this.isStunned && Math.floor(Date.now() / 100) % 2 === 0) {
-            ctx.strokeStyle = '#ffcc00';
-            ctx.fillStyle = '#ffcc00';
-        }
 
         // Head
         if (this.headImage.complete && this.headImage.naturalHeight !== 0) {
@@ -111,12 +89,7 @@ class Fighter {
 
         // Legs
         ctx.beginPath();
-        if (this.isKO) {
-            ctx.moveTo(centerX, topY + 85);
-            ctx.lineTo(centerX - 10, topY + 130);
-            ctx.moveTo(centerX, topY + 85);
-            ctx.lineTo(centerX + 10, topY + 130);
-        } else if (this.isAttacking && this.attackType === 'kick') {
+        if (this.isAttacking && this.attackType === 'kick') {
             ctx.moveTo(centerX, topY + 85);
             ctx.lineTo(centerX - (20 * dir), topY + 130);
             ctx.moveTo(centerX, topY + 85);
@@ -132,17 +105,7 @@ class Fighter {
 
         // Arms
         ctx.beginPath();
-        if (this.isKO) {
-            ctx.moveTo(centerX, topY + 50);
-            ctx.lineTo(centerX - 20, topY + 40);
-            ctx.moveTo(centerX, topY + 50);
-            ctx.lineTo(centerX + 20, topY + 40);
-        } else if (this.isBlocking) {
-            // Posture de garde (bras croisés devant)
-            ctx.moveTo(centerX, topY + 50);
-            ctx.lineTo(centerX + (25 * dir), topY + 45);
-            ctx.lineTo(centerX + (20 * dir), topY + 65);
-        } else if (this.isAttacking && this.attackType === 'punch') {
+        if (this.isAttacking && this.attackType === 'punch') {
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX - (20 * dir), topY + 75);
             ctx.moveTo(centerX, topY + 50);
@@ -160,42 +123,10 @@ class Fighter {
             ctx.fillStyle = this.attackType === 'punch' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 215, 0, 0.3)';
             ctx.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
         }
-
-        // Effets visuels de Garde (Bouclier)
-        if (this.isBlocking && !this.isKO) {
-            ctx.lineWidth = 4;
-            if (this.perfectBlockWindow > 0) {
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; // Cyan pour le parfait
-                ctx.beginPath();
-                ctx.arc(centerX + (25 * dir), topY + 55, 35, -Math.PI / 2, Math.PI / 2, dir < 0);
-                ctx.stroke();
-            } else {
-                ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)'; // Gris pour la garde normale
-                ctx.beginPath();
-                ctx.arc(centerX + (22 * dir), topY + 55, 28, -Math.PI / 2, Math.PI / 2, dir < 0);
-                ctx.stroke();
-            }
-        }
-
-        // Indicateur textuel de Stun
-        if (this.isStunned && !this.isKO) {
-            ctx.fillStyle = '#ffcc00';
-            ctx.font = 'bold 14px sans-serif';
-            ctx.fillText('⚡ STUNNED ⚡', centerX - 45, topY - 30);
-        }
-
-        ctx.restore(); // Rétablissement du contexte
     }
 
     update() {
         this.draw();
-
-        // Diminution des timers de statut
-        if (this.perfectBlockWindow > 0) this.perfectBlockWindow--;
-        if (this.stunTimer > 0) {
-            this.stunTimer--;
-            if (this.stunTimer <= 0) this.isStunned = false;
-        }
 
         if (this.side === 'left') {
             this.attackBox.position.x = this.position.x + this.width;
@@ -238,7 +169,7 @@ class Fighter {
     }
 
     attack(type) {
-        if (this.isAttacking || this.isStunned || this.isKO || this.isBlocking) return;
+        if (this.isAttacking) return;
         this.isAttacking = true;
         this.attackType = type;
         this.attackTimer = 12;
@@ -271,26 +202,6 @@ function rectangularCollision({ rectangle1, rectangle2 }) {
 
 function checkHit(attacker, defender) {
     if (rectangularCollision({ rectangle1: attacker, rectangle2: defender })) {
-
-        // Gestion de la Garde
-        if (defender.isBlocking && !defender.isKO) {
-            if (defender.perfectBlockWindow > 0) {
-                // PERFECT BLOCK : L'attaquant est immobilisé pendant 2 secondes (120 frames à 60fps)
-                attacker.isStunned = true;
-                attacker.stunTimer = 120;
-                attacker.velocity.x = 0;
-                attacker.isAttacking = false;
-                return; // Aucun dégât, aucun recul
-            } else {
-                // Garde Normale : Dégâts très réduits, pas de recul
-                defender.health -= attacker.attackType === 'punch' ? 1 : 2;
-                if (defender.health < 0) defender.health = 0;
-                updateHealthUI();
-                return;
-            }
-        }
-
-        // Coup normal (Sans garde)
         const damage = attacker.attackType === 'punch' ? 7 : 12;
         defender.health -= damage;
         if (defender.health < 0) defender.health = 0;
@@ -298,13 +209,12 @@ function checkHit(attacker, defender) {
         const knockbackDirection = attacker.side === 'left' ? 15 : -15;
         defender.position.x += knockbackDirection;
 
-        updateHealthUI();
+        if (defender === player2) {
+            document.getElementById('p2-health').style.width = defender.health + '%';
+        } else {
+            document.getElementById('p1-health').style.width = defender.health + '%';
+        }
     }
-}
-
-function updateHealthUI() {
-    document.getElementById('p1-health').style.width = player1.health + '%';
-    document.getElementById('p2-health').style.width = player2.health + '%';
 }
 
 let timer = 99;
@@ -338,26 +248,21 @@ function determineWinner() {
 }
 
 function startGame() {
+    // Apply selected heads
     player1.setHead(p1Choice);
     player2.setHead(p2Choice);
 
+    // UI Switches
     document.getElementById('character-select').style.display = 'none';
     document.getElementById('ui').style.display = 'flex';
 
-    // Reset complet des états
+    // Reset state
     player1.health = 100;
     player1.position = { x: 150, y: 0 };
-    player1.isKO = false;
-    player1.isStunned = false;
-    player1.isBlocking = false;
-
     player2.health = 100;
     player2.position = { x: 800, y: 0 };
-    player2.isKO = false;
-    player2.isStunned = false;
-    player2.isBlocking = false;
-
-    updateHealthUI();
+    document.getElementById('p1-health').style.width = '100%';
+    document.getElementById('p2-health').style.width = '100%';
 
     timer = 99;
     document.getElementById('timer').innerText = timer;
@@ -381,7 +286,7 @@ function returnToMenu() {
 function animate() {
     if (!gameActive) {
         animationId = window.requestAnimationFrame(animate);
-        return;
+        return; // Pause rendering if in menu
     }
     animationId = window.requestAnimationFrame(animate);
 
@@ -395,126 +300,89 @@ function animate() {
     player1.update();
     player2.update();
 
-    // Orientation face à face (uniquement si vivant)
-    if (!player1.isKO && !player2.isKO) {
-        if (player1.position.x < player2.position.x) {
-            player1.side = 'left';
-            player2.side = 'right';
-        } else {
-            player1.side = 'right';
-            player2.side = 'left';
-        }
+    if (player1.position.x < player2.position.x) {
+        player1.side = 'left';
+        player2.side = 'right';
+    } else {
+        player1.side = 'right';
+        player2.side = 'left';
     }
 
-    // Mouvements Joueur 1
     player1.velocity.x = 0;
-    if (!player1.isStunned && !player1.isKO && !player1.isBlocking) {
-        if (keys.a.pressed) player1.velocity.x = -6;
-        else if (keys.d.pressed) player1.velocity.x = 6;
-    }
+    if (keys.a.pressed) player1.velocity.x = -6;
+    else if (keys.d.pressed) player1.velocity.x = 6;
 
-    // Mouvements Joueur 2
     player2.velocity.x = 0;
-    if (!player2.isStunned && !player2.isKO && !player2.isBlocking) {
-        if (keys.ArrowLeft.pressed) player2.velocity.x = -6;
-        else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
-    }
+    if (keys.ArrowLeft.pressed) player2.velocity.x = -6;
+    else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
 
-    // Vérification du KO et déclenchement de l'animation avant la fin de partie
     if ((player1.health <= 0 || player2.health <= 0) && !gameOver) {
-        if (player1.health <= 0) player1.isKO = true;
-        if (player2.health <= 0) player2.isKO = true;
-
-        gameOver = true;
-        // On laisse 1.5 seconde pour voir l'animation du personnage tomber au sol
-        setTimeout(() => {
-            determineWinner();
-        }, 1500);
+        determineWinner();
     }
 }
 
 window.addEventListener('keydown', (event) => {
     if (gameOver || !gameActive) return;
 
+    // On convertit en minuscule pour simplifier les conditions
     const key = event.key.toLowerCase();
-
-    // Vérifications d'action
-    const canP1Act = !player1.isStunned && !player1.isKO;
-    const canP2Act = !player2.isStunned && !player2.isKO;
 
     switch (key) {
         // --- Joueur 1 ---
-        case 'd':
-            if (canP1Act && !player1.isBlocking) keys.d.pressed = true;
+        case 'd': 
+            keys.d.pressed = true; 
             break;
-        case 'a':
-        case 'q':
-            if (canP1Act && !player1.isBlocking) keys.a.pressed = true;
+        case 'a': 
+        case 'q': // Support AZERTY (gauche)
+            keys.a.pressed = true; 
             break;
-        case 'w':
-        case 'z':
-            if (canP1Act && player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
+        case 'w': 
+        case 'z': // Support AZERTY (saut)
+            if (player1.isGrounded) player1.velocity.y = -18; 
             break;
-        case 's': // Garde P1
-            if (canP1Act && player1.isGrounded && !player1.isAttacking) {
-                keys.s.pressed = true;
-                if (!player1.isBlocking) {
-                    player1.isBlocking = true;
-                    player1.perfectBlockWindow = 10; // Fenêtre active durant les 10 premières frames
-                }
-            }
+        case 'f': 
+            player1.attack('punch'); 
             break;
-        case 'f':
-            if (canP1Act) player1.attack('punch');
-            break;
-        case 'g':
-            if (canP1Act) player1.attack('kick');
+        case 'g': 
+            player1.attack('kick'); 
             break;
 
         // --- Joueur 2 ---
-        case 'arrowright':
-            if (canP2Act && !player2.isBlocking) keys.ArrowRight.pressed = true;
+        case 'arrowright': 
+            keys.ArrowRight.pressed = true; 
             break;
-        case 'arrowleft':
-            if (canP2Act && !player2.isBlocking) keys.ArrowLeft.pressed = true;
+        case 'arrowleft': 
+            keys.ArrowLeft.pressed = true; 
             break;
-        case 'arrowup':
-            if (canP2Act && player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
-            break;
-        case 'arrowdown': // Garde P2
-            if (canP2Act && player2.isGrounded && !player2.isAttacking) {
-                keys.ArrowDown.pressed = true;
-                if (!player2.isBlocking) {
-                    player2.isBlocking = true;
-                    player2.perfectBlockWindow = 10;
-                }
-            }
+        case 'arrowup': 
+            if (player2.isGrounded) player2.velocity.y = -18; 
             break;
     }
 
-    if (event.code === 'ShiftRight' && canP2Act) player2.attack('punch');
-    if (event.code === 'ControlRight' && canP2Act) player2.attack('kick');
+    // Gestion avec event.code pour les touches spéciales (Shift/Ctrl)
+    if (event.code === 'ShiftRight') player2.attack('punch');
+    if (event.code === 'ControlRight') player2.attack('kick');
 });
 
 window.addEventListener('keyup', (event) => {
     const key = event.key.toLowerCase();
-
+    
     switch (key) {
-        case 'd': keys.d.pressed = false; break;
-        case 'a':
-        case 'q': keys.a.pressed = false; break;
-        case 's': // Relâcher Garde P1
-            keys.s.pressed = false;
-            player1.isBlocking = false;
+        case 'd': 
+            keys.d.pressed = false; 
             break;
-
-        case 'arrowright': keys.ArrowRight.pressed = false; break;
-        case 'arrowleft': keys.ArrowLeft.pressed = false; break;
-        case 'arrowdown': // Relâcher Garde P2
-            keys.ArrowDown.pressed = false;
-            player2.isBlocking = false;
+        case 'a': 
+        case 'q': // Support AZERTY
+            keys.a.pressed = false; 
+            break;
+        case 'arrowright': 
+            keys.ArrowRight.pressed = false; 
+            break;
+        case 'arrowleft': 
+            keys.ArrowLeft.pressed = false; 
             break;
     }
 });
 
+// Start background loop, but keep game paused until "FIGHT!" is clicked
 animate();
