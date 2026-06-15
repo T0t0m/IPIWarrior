@@ -12,7 +12,7 @@ let p1Choice = 'fx.png';
 let p2Choice = 'kotlineur.png';
 let gameActive = false;
 
-// Track key states
+// Track key states (Fusion réussie : 's' et 'ArrowDown' sont bien là)
 const keys = {
     a: { pressed: false }, d: { pressed: false }, w: { pressed: false }, s: { pressed: false },
     ArrowLeft: { pressed: false }, ArrowRight: { pressed: false }, ArrowUp: { pressed: false }, ArrowDown: { pressed: false }
@@ -46,21 +46,19 @@ class Fighter {
         this.side = side;
         this.isGrounded = false;
         this.isAttacking = false;
+        this.isBlocking = false; // NOUVEAU : État de garde
         this.attackType = null;
         this.attackTimer = 0;
-        this.cooldown = 0; // Temps de récupération avant la prochaine attaque
+        this.cooldown = 0;
         this.headImage = new Image();
 
-        // Zone d'attaque circulaire
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
-            width: 100,
-            height: 40
+            radius: 25
         };
     }
 
     setHead(imageSrc) {
-        // Chemin du dossier des images
         this.headImage.src = '../asset/character/' + imageSrc;
     }
 
@@ -106,13 +104,19 @@ class Fighter {
         }
         ctx.stroke();
 
-        // Arms
+        // Arms (MODIFIÉ : Ajout de la posture de blocage)
         ctx.beginPath();
         if (this.isAttacking && this.attackType === 'punch') {
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX - (20 * dir), topY + 75);
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 50);
+        } else if (this.isBlocking) {
+            // Posture de garde (bras croisés devant)
+            ctx.moveTo(centerX, topY + 50);
+            ctx.lineTo(centerX + (15 * dir), topY + 25);
+            ctx.moveTo(centerX, topY + 50);
+            ctx.lineTo(centerX + (25 * dir), topY + 50);
         } else {
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX - 15, topY + 80);
@@ -124,14 +128,15 @@ class Fighter {
         // Visuel de l'Attack Box en cercle
         if (this.isAttacking) {
             ctx.fillStyle = this.attackType === 'punch' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 215, 0, 0.3)';
-            ctx.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
+            ctx.beginPath();
+            ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
     update() {
         this.draw();
 
-        // Position et taille des cercles d'attaque selon le type de coup
         if (this.attackType === 'punch') {
             this.attackBox.radius = 25;
             this.attackBox.position.y = this.position.y + 50;
@@ -140,14 +145,10 @@ class Fighter {
             this.attackBox.position.y = this.position.y + 110;
         }
 
-        if (this.attackType === 'punch') {
-            this.attackBox.position.y = this.position.y + 35;
-            this.attackBox.width = 60;
-            this.attackBox.height = 30;
-        } else if (this.attackType === 'kick') {
-            this.attackBox.position.y = this.position.y + 75;
-            this.attackBox.width = 70;
-            this.attackBox.height = 40;
+        if (this.side === 'left') {
+            this.attackBox.position.x = this.position.x + this.width + 10;
+        } else {
+            this.attackBox.position.x = this.position.x - 10;
         }
 
         this.position.x += this.velocity.x;
@@ -165,12 +166,10 @@ class Fighter {
         if (this.position.x < 0) this.position.x = 0;
         if (this.position.x + this.width > canvas.width) this.position.x = canvas.width - this.width;
 
-        // Gestion du temps de récupération (cooldown)
         if (this.cooldown > 0) {
             this.cooldown--;
         }
 
-        // Gestion de la durée de l'attaque affichée à l'écran
         if (this.isAttacking) {
             this.attackTimer--;
             if (this.attackTimer <= 0) {
@@ -181,19 +180,18 @@ class Fighter {
     }
 
     attack(type) {
-        // Bloque l'attaque si le joueur attaque déjà ou s'il est en période de récupération
-        if (this.isAttacking || this.cooldown > 0) return;
+        // NOUVEAU : On ne peut pas attaquer pendant qu'on bloque
+        if (this.isAttacking || this.cooldown > 0 || this.isBlocking) return;
 
         this.isAttacking = true;
         this.attackType = type;
 
-        // Configuration des vitesses d'attaque (Poing = 1x, Pied = 2.5x plus lent)
         if (type === 'punch') {
-            this.attackTimer = 10; // Durée visuelle du coup
-            this.cooldown = 20;    // Temps de pause avant le prochain coup
+            this.attackTimer = 10;
+            this.cooldown = 20;
         } else if (type === 'kick') {
-            this.attackTimer = 25; // 2.5x plus long
-            this.cooldown = 50;    // 2.5x plus long
+            this.attackTimer = 25;
+            this.cooldown = 50;
         }
 
         checkHit(this, this === player1 ? player2 : player1);
@@ -214,7 +212,6 @@ const player2 = new Fighter({
     side: 'right'
 });
 
-// Fonction mathématique pour calculer la collision Cercle/Rectangle
 function circleRectCollision(circle, rect) {
     let testX = circle.position.x;
     let testY = circle.position.y;
@@ -233,13 +230,19 @@ function circleRectCollision(circle, rect) {
 }
 
 function checkHit(attacker, defender) {
-    // Utilisation de la collision Cercle/Rectangle
     if (circleRectCollision(attacker.attackBox, defender)) {
-        const damage = attacker.attackType === 'punch' ? 7 : 12;
+        let damage = attacker.attackType === 'punch' ? 7 : 12;
+        let knockbackDirection = attacker.side === 'left' ? 15 : -15;
+
+        // NOUVEAU : Gestion de l'absorption des dégâts par le blocage
+        if (defender.isBlocking) {
+            damage = Math.floor(damage * 0.25); // Dégâts réduits à 25%
+            knockbackDirection = knockbackDirection / 2; // Recul réduit
+        }
+
         defender.health -= damage;
         if (defender.health < 0) defender.health = 0;
 
-        const knockbackDirection = attacker.side === 'left' ? 15 : -15;
         defender.position.x += knockbackDirection;
 
         if (defender === player2) {
@@ -291,11 +294,13 @@ function startGame() {
     player1.position = { x: 150, y: 0 };
     player1.cooldown = 0;
     player1.isAttacking = false;
+    player1.isBlocking = false;
 
     player2.health = 100;
     player2.position = { x: 800, y: 0 };
     player2.cooldown = 0;
     player2.isAttacking = false;
+    player2.isBlocking = false;
 
     document.getElementById('p1-health').style.width = '100%';
     document.getElementById('p2-health').style.width = '100%';
@@ -322,7 +327,7 @@ function returnToMenu() {
 function animate() {
     if (!gameActive) {
         animationId = window.requestAnimationFrame(animate);
-        return; 
+        return;
     }
     animationId = window.requestAnimationFrame(animate);
 
@@ -344,13 +349,22 @@ function animate() {
         player2.side = 'left';
     }
 
+    // NOUVEAU : Application des contrôles de blocage
+    player1.isBlocking = keys.s.pressed && player1.isGrounded;
+    player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
+
+    // NOUVEAU : Un joueur qui bloque ne peut pas avancer/reculer
     player1.velocity.x = 0;
-    if (keys.a.pressed) player1.velocity.x = -6;
-    else if (keys.d.pressed) player1.velocity.x = 6;
+    if (!player1.isBlocking) {
+        if (keys.a.pressed) player1.velocity.x = -6;
+        else if (keys.d.pressed) player1.velocity.x = 6;
+    }
 
     player2.velocity.x = 0;
-    if (keys.ArrowLeft.pressed) player2.velocity.x = -6;
-    else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
+    if (!player2.isBlocking) {
+        if (keys.ArrowLeft.pressed) player2.velocity.x = -6;
+        else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
+    }
 
     if ((player1.health <= 0 || player2.health <= 0) && !gameOver) {
         determineWinner();
@@ -360,65 +374,77 @@ function animate() {
 window.addEventListener('keydown', (event) => {
     if (gameOver || !gameActive) return;
 
-    // On convertit en minuscule pour simplifier les conditions
     const key = event.key.toLowerCase();
 
     switch (key) {
-        // Joueur 1 (Support AZERTY/QWERTY combiné)
-        case 'd': 
-            keys.d.pressed = true; 
+        // Joueur 1
+        case 'd':
+            keys.d.pressed = true;
             break;
-        case 'a': 
-        case 'q': // Support AZERTY (gauche)
-            keys.a.pressed = true; 
+        case 'a':
+        case 'q':
+            keys.a.pressed = true;
             break;
-        case 'w': 
-        case 'z': // Support AZERTY (saut)
-            if (player1.isGrounded) player1.velocity.y = -18; 
+        case 'w':
+        case 'z':
+            if (player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
             break;
-        case 'f': 
-            player1.attack('punch'); 
+        case 's': // NOUVEAU
+            keys.s.pressed = true;
             break;
-        case 'g': 
-            player1.attack('kick'); 
+        case 'f':
+            player1.attack('punch');
+            break;
+        case 'g':
+            player1.attack('kick');
             break;
 
         // Joueur 2
-        case 'arrowright': 
-            keys.ArrowRight.pressed = true; 
+        case 'arrowright':
+            keys.ArrowRight.pressed = true;
             break;
-        case 'arrowleft': 
-            keys.ArrowLeft.pressed = true; 
+        case 'arrowleft':
+            keys.ArrowLeft.pressed = true;
             break;
-        case 'arrowup': 
-            if (player2.isGrounded) player2.velocity.y = -18; 
+        case 'arrowup':
+            if (player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
+            break;
+        case 'arrowdown': // NOUVEAU
+            keys.ArrowDown.pressed = true;
             break;
     }
 
-    // Gestion avec event.code pour les touches spéciales (Shift/Ctrl)
     if (event.code === 'ShiftRight') player2.attack('punch');
     if (event.code === 'ControlRight') player2.attack('kick');
 });
 
 window.addEventListener('keyup', (event) => {
     const key = event.key.toLowerCase();
-    
+
     switch (key) {
-        case 'd': 
-            keys.d.pressed = false; 
+        // Joueur 1
+        case 'd':
+            keys.d.pressed = false;
             break;
-        case 'a': 
-        case 'q': // Support AZERTY
-            keys.a.pressed = false; 
+        case 'a':
+        case 'q':
+            keys.a.pressed = false;
             break;
-        case 'arrowright': 
-            keys.ArrowRight.pressed = false; 
+        case 's': // NOUVEAU
+            keys.s.pressed = false;
             break;
-        case 'arrowleft': 
-            keys.ArrowLeft.pressed = false; 
+
+        // Joueur 2
+        case 'arrowright':
+            keys.ArrowRight.pressed = false;
+            break;
+        case 'arrowleft':
+            keys.ArrowLeft.pressed = false;
+            break;
+        case 'arrowdown': // NOUVEAU
+            keys.ArrowDown.pressed = false;
             break;
     }
 });
 
-// Start background loop, but keep game paused until "FIGHT!" is clicked
 animate();
