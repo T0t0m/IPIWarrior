@@ -14,6 +14,7 @@
 
     <div class="game-wrapper">
 
+        <!-- Contrôles Joueur 1 -->
         <div class="side-controls">
             <h3 class="p1-color">PLAYER 1</h3>
             <div class="control-box">
@@ -22,15 +23,19 @@
                 <p><strong>Block</strong><br>S</p>
                 <p><strong>Punch</strong><br>F</p>
                 <p><strong>Kick</strong><br>G</p>
+                <p><strong>Ulti</strong><br>E</p>
             </div>
         </div>
 
+        <!-- Écran de jeu -->
         <div id="game-container">
 
+            <!-- Menu de sélection -->
             <div id="character-select">
                 <h2>SELECT YOUR FIGHTERS</h2>
                 <div class="selection-area">
 
+                    <!-- Sélection Joueur 1 -->
                     <div class="player-select" id="p1-selection">
                         <h3 class="p1-color">PLAYER 1 (RED)</h3>
                         <div class="portrait-container">
@@ -48,6 +53,7 @@
                         </div>
                     </div>
 
+                    <!-- Sélection Joueur 2 -->
                     <div class="player-select" id="p2-selection">
                         <h3 class="p2-color">PLAYER 2 (BLUE)</h3>
                         <div class="portrait-container">
@@ -69,12 +75,17 @@
                 <button id="start-fight-btn" onclick="startGame()">FIGHT!</button>
             </div>
 
+            <!-- Arène de combat -->
             <canvas id="gameCanvas"></canvas>
 
+            <!-- Interface de combat -->
             <div id="ui">
                 <div class="player-ui">
                     <div class="health-bar-container" id="p1-health-container">
                         <div class="health-bar" id="p1-health"></div>
+                    </div>
+                    <div class="ulti-bar-container" id="p1-ulti-container">
+                        <div class="ulti-bar" id="p1-ulti"></div>
                     </div>
                     <div id="p1-name" class="char-name p1-color">PLAYER 1</div>
                 </div>
@@ -85,16 +96,21 @@
                     <div class="health-bar-container" id="p2-health-container">
                         <div class="health-bar" id="p2-health"></div>
                     </div>
+                    <div class="ulti-bar-container" id="p2-ulti-container">
+                        <div class="ulti-bar" id="p2-ulti"></div>
+                    </div>
                     <div id="p2-name" class="char-name p2-color">PLAYER 2</div>
                 </div>
             </div>
 
+            <!-- Écran de fin de partie -->
             <div id="display-text">
                 <span id="win-message">PLAYER 1 WINS!</span>
                 <button id="restart-btn" onclick="returnToMenu()">CHARACTER SELECT</button>
             </div>
         </div>
 
+        <!-- Contrôles Joueur 2 -->
         <div class="side-controls">
             <h3 class="p2-color">PLAYER 2</h3>
             <div class="control-box">
@@ -103,6 +119,7 @@
                 <p><strong>Block</strong><br>▼</p>
                 <p><strong>Punch</strong><br>R-Shift</p>
                 <p><strong>Kick</strong><br>R-Ctrl</p>
+                <p><strong>Ulti</strong><br>Enter</p>
             </div>
         </div>
 

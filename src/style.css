@@ -13,7 +13,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     color: #fff;
-    overflow-x: hidden; /* Empêche le défilement horizontal */
+    overflow-x: hidden;
 }
 
 h1 {
@@ -32,8 +32,8 @@ h1 {
     gap: 30px;
     width: 100%;
     max-width: 1500px;
-    flex-wrap: wrap; /* Permet aux panneaux de passer à la ligne sur petit écran */
-    padding: 20px;   /* Évite que le jeu touche les bords de l'écran */
+    flex-wrap: wrap;
+    padding: 20px;
 }
 
 .side-controls {
@@ -87,19 +87,19 @@ h1 {
 /* --- Écran de jeu principal --- */
 #game-container {
     position: relative;
-    box-sizing: content-box; /* La bordure s'ajoute à l'extérieur */
-    width: 100%;             /* Le cadre prend toute la largeur dispo... */
-    max-width: 1024px;       /* ... mais pas plus que 1024px */
-    height: auto;            /* S'adapte proportionnellement */
-    aspect-ratio: 1024 / 576;/* Garde les proportions 16:9 parfaites */
+    box-sizing: content-box;
+    width: 100%;
+    max-width: 1024px;
+    height: auto;
+    aspect-ratio: 1024 / 576;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
     border: 4px solid #333;
     background: linear-gradient(to bottom, #2a2a35 0%, #1a1a24 100%);
 }
 
 canvas {
-    display: block; /* Supprime la marge invisible en dessous du jeu */
-    width: 100%;    /* Le canvas étire son rendu visuel dans le conteneur */
+    display: block;
+    width: 100%;
     height: 100%;
 }
 
@@ -263,6 +263,44 @@ canvas {
     background: linear-gradient(90deg, #00d2ff, #0066ff);
 }
 
+/* --- Barres d'Ultimate --- */
+.ulti-bar-container {
+    position: relative;
+    width: 90%;
+    height: 10px;
+    background-color: #222;
+    border: 1px solid #fff;
+    margin-top: 5px;
+}
+
+#p1-ulti-container {
+    transform: skewX(-10deg);
+}
+
+#p2-ulti-container {
+    transform: skewX(10deg);
+}
+
+.ulti-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+#p1-ulti {
+    right: 0;
+    background: linear-gradient(90deg, #ffcc00, #ffea00);
+    box-shadow: 0 0 10px #ffcc00;
+}
+
+#p2-ulti {
+    left: 0;
+    background: linear-gradient(90deg, #ffcc00, #ffea00);
+    box-shadow: 0 0 10px #ffcc00;
+}
+
 .char-name {
     margin-top: 8px;
     font-size: 20px;
@@ -328,17 +366,17 @@ canvas {
     #display-text {
         font-size: 48px;
     }
-    
+
     #character-select h2 {
         font-size: 32px;
         margin-bottom: 15px;
     }
-    
+
     .portrait {
         width: 60px;
         height: 60px;
     }
-    
+
     .portrait-container {
         max-width: 220px;
     }
@@ -371,19 +409,19 @@ canvas {
         align-items: center;
         flex-wrap: wrap;
     }
-    
+
     .side-controls h3 {
         width: 100%;
         margin-bottom: 10px;
     }
-    
+
     .control-box {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .control-box p {
         margin-bottom: 0;
     }
