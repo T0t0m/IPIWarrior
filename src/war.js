@@ -44,14 +44,10 @@ function showNetworkMenu() {
 }
 
 function returnToMainMenu() {
-    // 1. On cache les menus réseau et de sélection
     document.getElementById('network-menu').style.display = 'none';
     document.getElementById('character-select').style.display = 'none';
-
-    // 2. On réaffiche le menu principal
     document.getElementById('main-menu').style.display = 'flex';
 
-    // 3. SÉCURITÉ : Si on était en ligne et qu'on annule, on coupe la connexion proprement
     if (conn) {
         conn.close();
         conn = null;
@@ -108,6 +104,10 @@ function setupConnection() {
         } else if (data.type === 'bgSelect') {
             selectBg(data.imageSrc, data.elementId);
         } else if (data.type === 'startGame') {
+            // Le client reçoit les choix définitifs (y compris ceux générés par "Aléatoire")
+            p1Choice = data.p1;
+            p2Choice = data.p2;
+            bgChoice = data.bg;
             startGame();
         } else if (data.type === 'keydown' && isHost) {
             handleInput(data.key, data.code, true);
@@ -127,7 +127,6 @@ function goToStep(step) {
     document.querySelectorAll('.step-container').forEach(el => el.style.display = 'none');
     document.getElementById('step-' + step).style.display = 'flex';
 
-    // Si c'est un client en ligne, cacher le bouton démarrer
     if (step === 3 && !isHost && !isLocalMode) {
         document.getElementById('start-fight-btn').style.display = 'none';
         document.getElementById('waiting-host-msg').style.display = 'block';
@@ -169,8 +168,44 @@ function handleBgSelect(imageSrc, elementId) {
 
 function handleStartGame() {
     if (isHost) {
+        // Liste des chemins disponibles pour le tirage aléatoire
+        const availableChars = [
+            '../asset/character/fx.png',
+            '../asset/character/kotlineur.png',
+            '../asset/character/etienne.png',
+            '../asset/character/benito.png',
+            '../asset/character/uber.png'
+        ];
+        const availableStages = [
+            '../asset/backgrounds/ipi.png',
+            '../asset/backgrounds/ipi-china.png',
+            '../asset/backgrounds/ipi-capitole.png',
+            '../asset/backgrounds/ipi-garonne.png',
+            '../asset/backgrounds/ipi-jungle.png',
+            '../asset/backgrounds/ipi-street.png'
+        ];
+
+        // Résolution des choix aléatoires UNIQUEMENT par l'hôte pour éviter la désynchronisation
+        if (p1Choice === 'random') {
+            p1Choice = availableChars[Math.floor(Math.random() * availableChars.length)];
+        }
+        if (p2Choice === 'random') {
+            p2Choice = availableChars[Math.floor(Math.random() * availableChars.length)];
+        }
+        if (bgChoice === 'random') {
+            bgChoice = availableStages[Math.floor(Math.random() * availableStages.length)];
+        }
+
         startGame();
-        if (conn) conn.send({ type: 'startGame' });
+
+        if (conn) {
+            conn.send({
+                type: 'startGame',
+                p1: p1Choice,
+                p2: p2Choice,
+                bg: bgChoice
+            });
+        }
     }
 }
 
@@ -193,6 +228,7 @@ function selectBg(imageSrc, elementId) {
 }
 
 function formatCharacterName(filename) {
+    if (filename === 'random') return '?';
     let rawName = filename.split('/').pop().replace('.png', '');
     if (rawName.toLowerCase() === 'fx') return 'FX';
     return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
@@ -651,6 +687,8 @@ function animate() {
         ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
+    ctx.fillStyle = '#111116'; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, groundY, canvas.width, 4);
 
     player1.update(); player2.update();
 
