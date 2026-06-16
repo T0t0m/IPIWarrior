@@ -44,8 +44,22 @@ function showNetworkMenu() {
 }
 
 function returnToMainMenu() {
+    // 1. On cache les menus réseau et de sélection
     document.getElementById('network-menu').style.display = 'none';
+    document.getElementById('character-select').style.display = 'none';
+
+    // 2. On réaffiche le menu principal
     document.getElementById('main-menu').style.display = 'flex';
+
+    // 3. SÉCURITÉ : Si on était en ligne et qu'on annule, on coupe la connexion proprement
+    if (conn) {
+        conn.close();
+        conn = null;
+    }
+    if (peer) {
+        peer.destroy();
+        peer = null;
+    }
 }
 
 function hostGame() {
