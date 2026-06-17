@@ -104,7 +104,6 @@ function setupConnection() {
         } else if (data.type === 'bgSelect') {
             selectBg(data.imageSrc, data.elementId);
         } else if (data.type === 'startGame') {
-            // Le client reçoit les choix définitifs (y compris ceux générés par "Aléatoire")
             p1Choice = data.p1;
             p2Choice = data.p2;
             bgChoice = data.bg;
@@ -168,13 +167,16 @@ function handleBgSelect(imageSrc, elementId) {
 
 function handleStartGame() {
     if (isHost) {
-        // Liste des chemins disponibles pour le tirage aléatoire
         const availableChars = [
             '../asset/character/fx.png',
             '../asset/character/kotlineur.png',
             '../asset/character/etienne.png',
             '../asset/character/benito.png',
-            '../asset/character/uber.png'
+            '../asset/character/uber.png',
+            '../asset/character/le-goat.png',
+            '../asset/character/stephanie.png',
+            '../asset/character/thomas.png',
+            '../asset/character/yvon.png'
         ];
         const availableStages = [
             '../asset/backgrounds/ipi.png',
@@ -185,16 +187,9 @@ function handleStartGame() {
             '../asset/backgrounds/ipi-street.png'
         ];
 
-        // Résolution des choix aléatoires UNIQUEMENT par l'hôte pour éviter la désynchronisation
-        if (p1Choice === 'random') {
-            p1Choice = availableChars[Math.floor(Math.random() * availableChars.length)];
-        }
-        if (p2Choice === 'random') {
-            p2Choice = availableChars[Math.floor(Math.random() * availableChars.length)];
-        }
-        if (bgChoice === 'random') {
-            bgChoice = availableStages[Math.floor(Math.random() * availableStages.length)];
-        }
+        if (p1Choice === 'random') p1Choice = availableChars[Math.floor(Math.random() * availableChars.length)];
+        if (p2Choice === 'random') p2Choice = availableChars[Math.floor(Math.random() * availableChars.length)];
+        if (bgChoice === 'random') bgChoice = availableStages[Math.floor(Math.random() * availableStages.length)];
 
         startGame();
 
@@ -230,6 +225,7 @@ function selectBg(imageSrc, elementId) {
 function formatCharacterName(filename) {
     if (filename === 'random') return '?';
     let rawName = filename.split('/').pop().replace('.png', '');
+    if (rawName.toLowerCase() === 'le-goat') return 'YANIS';
     if (rawName.toLowerCase() === 'fx') return 'FX';
     return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 }
@@ -262,11 +258,16 @@ class Fighter {
         this.ultiPhrase = '';
         this.ultiPhraseTimer = 0;
 
+        // --- Variables des Ultimes ---
         this.fxClockActive = false;
         this.fxClockY = 0;
         this.fxClockHit = false;
-        this.isCharging = false;
+
+        this.isCharging = false; // Utilisé par Etienne (et Yvon)
+        this.etienneHit = false;
+
         this.benitoHealTimer = 0;
+        this.babies = []; // Gère les 3 bébés de Thomas
 
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
@@ -354,7 +355,8 @@ class Fighter {
             ctx.lineTo(centerX - (20 * dir), topY + 75);
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 50);
-        } else if (this.isAttacking && this.attackType === 'ulti' && this.characterName === 'etienne') {
+        } else if (this.isAttacking && this.attackType === 'ulti' && this.isCharging) {
+            // Étienne (et Yvon) lève les bras pendant la charge
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 20);
             ctx.moveTo(centerX, topY + 50);
@@ -379,7 +381,8 @@ class Fighter {
             } else if (this.attackType === 'kick') {
                 ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
                 ctx.beginPath(); ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2); ctx.fill();
-            } else if (this.attackType === 'ulti' && this.characterName === 'etienne') {
+            } else if (this.attackType === 'ulti' && this.isCharging) {
+                // Aura d'énergie pour la charge
                 ctx.fillStyle = 'rgba(255, 50, 0, 0.4)';
                 ctx.beginPath(); ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2); ctx.fill();
             }
@@ -423,7 +426,7 @@ class Fighter {
             this.attackBox.radius = 25; this.attackBox.position.y = this.position.y + 50;
         } else if (this.attackType === 'kick') {
             this.attackBox.radius = 35; this.attackBox.position.y = this.position.y + 110;
-        } else if (this.characterName === 'etienne' && this.attackType === 'ulti') {
+        } else if (this.isCharging && this.attackType === 'ulti') {
             this.attackBox.radius = 45; this.attackBox.position.y = this.position.y + 65;
         }
 
@@ -473,28 +476,90 @@ class Fighter {
             this.ultimateCharge = 0; this.cooldown = 150; this.ultiPhraseTimer = 90;
             this.isAttacking = true; this.attackType = 'ulti';
 
+            let enemy = this === player1 ? player2 : player1;
+
             if (this.characterName === 'fx') {
                 this.ultiPhrase = "METTEZ VOS HEURES !"; this.attackTimer = 110;
                 this.fxClockActive = true; this.fxClockY = -150; this.fxClockHit = false;
-            } else if (this.characterName === 'etienne') {
-                this.ultiPhrase = "LE DIRECTEUR C'EST MOI !"; this.attackTimer = 40; this.isCharging = true;
-            } else if (this.characterName === 'uber') {
+            }
+            else if (this.characterName === 'etienne') {
+                this.ultiPhrase = "LE DIRECTEUR C'EST MOI !";
+                this.attackTimer = 50; // Temps de la course
+                this.isCharging = true;
+                this.etienneHit = false;
+            }
+            else if (this.characterName === 'uber') {
                 this.ultiPhrase = "WINDOWS C'EST DE LA MERDE !"; this.attackTimer = 120;
-            } else if (this.characterName === 'kotlineur') {
+            }
+            else if (this.characterName === 'kotlineur') {
                 this.ultiPhrase = "LA SALLE !"; this.attackTimer = 120;
-            } else if (this.characterName === 'benito') {
+            }
+            else if (this.characterName === 'benito') {
                 this.ultiPhrase = "J'AI RIEN À PROUVER !"; this.attackTimer = 40;
                 this.health = Math.min(100, this.health + 50); this.benitoHealTimer = 40;
                 updateHealthUI();
 
-                let enemy = this === player1 ? player2 : player1;
                 let dist = Math.abs((this.position.x + this.width / 2) - (enemy.position.x + enemy.width / 2));
-
                 if (dist < 150 && !enemy.isKO) {
                     let pushDir = this.position.x < enemy.position.x ? 1 : -1;
                     enemy.position.x += 120 * pushDir;
                     if (enemy.position.x < 0) enemy.position.x = 0;
                     if (enemy.position.x + enemy.width > canvas.width) enemy.position.x = canvas.width - enemy.width;
+                }
+            }
+            else if (this.characterName === 'le-goat') {
+                /*
+                 * TODO: ULTI DE YANIS
+                 * Prévu pour une prochaine mise à jour. Le code sera ici.
+                 */
+                this.ultiPhrase = "ULTI EN COURS DE MAJ...";
+                this.attackTimer = 40; // Temps par défaut pour éviter un bug
+            }
+            else if (this.characterName === 'stephanie') {
+                this.ultiPhrase = "BONJOUR DU MARDI !"; this.attackTimer = 40;
+                if (!enemy.isKO) {
+                    enemy.isStunned = true;
+                    enemy.stunTimer = 180; // Paralyse l'adversaire (3 secondes)
+                }
+            }
+            else if (this.characterName === 'thomas') {
+                this.ultiPhrase = "J'AI FAIT UN GOSSE !"; this.attackTimer = 80;
+
+                // Spawn de 3 gros bébés décalés du côté opposé
+                let spawnSide = this.position.x < canvas.width / 2 ? canvas.width * 0.75 : canvas.width * 0.25;
+                this.babies = [
+                    { x: spawnSide - 100, y: -100, hit: false, radius: 45 },
+                    { x: spawnSide, y: -300, hit: false, radius: 45 },
+                    { x: spawnSide + 100, y: -500, hit: false, radius: 45 }
+                ];
+            }
+            else if (this.characterName === 'yvon') {
+                this.ultiPhrase = "VOUS M'ENTENDEZ ?"; this.attackTimer = 80;
+
+                // Dégâts sur lui-même
+                this.health -= 15;
+                if (this.health < 1) this.health = 1;
+                updateHealthUI();
+
+                // Tirage au sort d'un autre ulti (SANS Yanis)
+                const effects = ['fx', 'etienne', 'stephanie', 'thomas', 'benito'];
+                const chosen = effects[Math.floor(Math.random() * effects.length)];
+
+                if (chosen === 'fx') {
+                    this.fxClockActive = true; this.fxClockY = -150; this.fxClockHit = false;
+                } else if (chosen === 'etienne') {
+                    this.isCharging = true; this.etienneHit = false;
+                } else if (chosen === 'stephanie') {
+                    enemy.isStunned = true; enemy.stunTimer = 180;
+                } else if (chosen === 'thomas') {
+                    let spawnSide = this.position.x < canvas.width / 2 ? canvas.width * 0.75 : canvas.width * 0.25;
+                    this.babies = [
+                        { x: spawnSide - 100, y: -100, hit: false, radius: 45 },
+                        { x: spawnSide, y: -300, hit: false, radius: 45 },
+                        { x: spawnSide + 100, y: -500, hit: false, radius: 45 }
+                    ];
+                } else if (chosen === 'benito') {
+                    this.health = Math.min(100, this.health + 50); this.benitoHealTimer = 40; updateHealthUI();
                 }
             }
             return;
@@ -572,7 +637,8 @@ function serializePlayer(p) {
         attackType: p.attackType, isStunned: p.isStunned, isKO: p.isKO,
         ultCharge: p.ultimateCharge, fxActive: p.fxClockActive, fxY: p.fxClockY,
         ultiPhrase: p.ultiPhrase, ultiTimer: p.ultiPhraseTimer, healTimer: p.benitoHealTimer,
-        vx: p.velocity.x
+        vx: p.velocity.x,
+        babies: p.babies ? p.babies.map(b => ({ x: b.x, y: b.y, radius: b.radius, hit: b.hit })) : []
     };
 }
 
@@ -584,6 +650,7 @@ function syncGameState(state) {
         p.ultimateCharge = data.ultCharge; p.fxClockActive = data.fxActive; p.fxClockY = data.fxY;
         p.ultiPhrase = data.ultiPhrase; p.ultiPhraseTimer = data.ultiTimer; p.benitoHealTimer = data.healTimer;
         p.velocity.x = data.vx;
+        p.babies = data.babies || [];
     };
     applyState(player1, state.p1);
     applyState(player2, state.p2);
@@ -649,10 +716,10 @@ function startGame() {
     document.getElementById('ui').style.display = 'flex';
 
     player1.health = 100; player1.position = { x: 150, y: 0 }; player1.isKO = false;
-    player1.isStunned = false; player1.isBlocking = false; player1.isAttacking = false; player1.cooldown = 0; player1.ultimateCharge = 0; player1.fxClockActive = false; player1.isCharging = false; player1.benitoHealTimer = 0; player1.ultiPhraseTimer = 0;
+    player1.isStunned = false; player1.isBlocking = false; player1.isAttacking = false; player1.cooldown = 0; player1.ultimateCharge = 0; player1.fxClockActive = false; player1.isCharging = false; player1.benitoHealTimer = 0; player1.ultiPhraseTimer = 0; player1.babies = []; player1.etienneHit = false;
 
     player2.health = 100; player2.position = { x: 800, y: 0 }; player2.isKO = false;
-    player2.isStunned = false; player2.isBlocking = false; player2.isAttacking = false; player2.cooldown = 0; player2.ultimateCharge = 0; player2.fxClockActive = false; player2.isCharging = false; player2.benitoHealTimer = 0; player2.ultiPhraseTimer = 0;
+    player2.isStunned = false; player2.isBlocking = false; player2.isAttacking = false; player2.cooldown = 0; player2.ultimateCharge = 0; player2.fxClockActive = false; player2.isCharging = false; player2.benitoHealTimer = 0; player2.ultiPhraseTimer = 0; player2.babies = []; player2.etienneHit = false;
 
     updateHealthUI(); timer = 99; document.getElementById('timer').innerText = timer;
     document.getElementById('display-text').style.display = 'none';
@@ -701,34 +768,62 @@ function animate() {
         player1.isBlocking = keys.KeyS.pressed && player1.isGrounded;
         player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
 
-        // P1 Move
+        // --- P1 Move & Etienne Charge ---
         player1.velocity.x = 0;
         if (player1.isCharging) {
-            player1.velocity.x = player1.side === 'left' ? 16 : -16;
-            if (circleRectCollision(player1.attackBox, player2) && player2.isGrounded && !player2.isBlocking) {
-                dealUltiDamage(player2, 35, player1.side === 'left' ? 45 : -40); player1.isCharging = false; player1.isAttacking = false;
+            player1.velocity.x = player1.side === 'left' ? 20 : -20; // Vitesse de course
+
+            if (circleRectCollision(player1.attackBox, player2) && !player2.isKO) {
+                // Pousse l'adversaire pendant la charge
+                player2.position.x += player1.velocity.x;
+                if (player2.position.x < 0) player2.position.x = 0;
+                if (player2.position.x + player2.width > canvas.width) player2.position.x = canvas.width - player2.width;
+
+                if (!player1.etienneHit) {
+                    player1.etienneHit = true;
+                    dealUltiDamage(player2, 35, player1.side === 'left' ? 20 : -20);
+                }
             }
-            if (player1.attackTimer <= 0) player1.isCharging = false;
+
+            if (player1.attackTimer <= 0) {
+                player1.isCharging = false;
+                player1.isAttacking = false;
+                player1.etienneHit = false;
+            }
         } else if (!player1.isStunned && !player1.isKO && !player1.isBlocking) {
             if (keys.KeyA.pressed || keys.KeyQ.pressed) player1.velocity.x = -6;
             else if (keys.KeyD.pressed) player1.velocity.x = 6;
         }
 
-        // P2 Move
+        // --- P2 Move & Etienne Charge ---
         player2.velocity.x = 0;
         if (player2.isCharging) {
-            player2.velocity.x = player2.side === 'left' ? 16 : -16;
-            if (circleRectCollision(player2.attackBox, player1) && player1.isGrounded && !player1.isBlocking) {
-                dealUltiDamage(player1, 35, player2.side === 'left' ? 45 : -40); player2.isCharging = false; player2.isAttacking = false;
+            player2.velocity.x = player2.side === 'left' ? 20 : -20;
+
+            if (circleRectCollision(player2.attackBox, player1) && !player1.isKO) {
+                player1.position.x += player2.velocity.x;
+                if (player1.position.x < 0) player1.position.x = 0;
+                if (player1.position.x + player1.width > canvas.width) player1.position.x = canvas.width - player1.width;
+
+                if (!player2.etienneHit) {
+                    player2.etienneHit = true;
+                    dealUltiDamage(player1, 35, player2.side === 'left' ? 20 : -20);
+                }
             }
-            if (player2.attackTimer <= 0) player2.isCharging = false;
+
+            if (player2.attackTimer <= 0) {
+                player2.isCharging = false;
+                player2.isAttacking = false;
+                player2.etienneHit = false;
+            }
         } else if (!player2.isStunned && !player2.isKO && !player2.isBlocking) {
             if (keys.ArrowLeft.pressed) player2.velocity.x = -6; else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
         }
 
-        // FX Ulti
+        // GESTION PHYSIQUE DES AUTRES ULTIMES
         [player1, player2].forEach(p => {
             let enemy = p === player1 ? player2 : player1;
+
             if (p.fxClockActive) {
                 p.fxClockY += 14;
                 if (p.fxClockY >= groundY - 60 && !p.fxClockHit) {
@@ -738,6 +833,20 @@ function animate() {
                     }
                 }
                 if (p.fxClockY > canvas.height + 100) p.fxClockActive = false;
+            }
+
+            // Gestion de la chute des bébés de Thomas
+            if (p.babies && p.babies.length > 0) {
+                p.babies.forEach(baby => {
+                    baby.y += 18;
+                    if (baby.y >= groundY - baby.radius && !baby.hit) {
+                        baby.hit = true;
+                        if (Math.abs((enemy.position.x + enemy.width / 2) - baby.x) < 130 && !enemy.isBlocking && !enemy.isKO) {
+                            dealUltiDamage(enemy, 15, baby.x < enemy.position.x ? 35 : -35); // 15 dégâts par bébé touché
+                        }
+                    }
+                });
+                p.babies = p.babies.filter(baby => baby.y < canvas.height + 100);
             }
         });
 
@@ -759,7 +868,7 @@ function animate() {
         }
     }
 
-    // Effets visuels canvas des ultis
+    // --- EFFETS VISUELS CANVAS ---
     [player1, player2].forEach(p => {
         if (p.fxClockActive) {
             ctx.fillStyle = '#222'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
@@ -768,6 +877,16 @@ function animate() {
             ctx.moveTo(canvas.width / 2, p.fxClockY); ctx.lineTo(canvas.width / 2, p.fxClockY - 45);
             ctx.moveTo(canvas.width / 2, p.fxClockY); ctx.lineTo(canvas.width / 2 + 30, p.fxClockY + 15); ctx.stroke();
         }
+
+        // Dessin des gros bébés
+        if (p.babies && p.babies.length > 0) {
+            p.babies.forEach(baby => {
+                ctx.fillStyle = '#ffb6c1'; ctx.beginPath(); ctx.arc(baby.x, baby.y, baby.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#000'; ctx.font = '50px Arial'; ctx.textAlign = 'center';
+                ctx.fillText("👶", baby.x, baby.y + 18);
+            });
+        }
+
         if (p.characterName === 'uber' && p.isAttacking && p.attackType === 'ulti') {
             ctx.fillStyle = '#00ff66'; ctx.font = 'bold 14px inherit'; ctx.textAlign = 'left';
             for (let i = 0; i < 5; i++) {
@@ -786,7 +905,6 @@ function animate() {
         }
     });
 
-    // Affichage des phrases d'ultime via le DOM
     const p1UltiDiv = document.getElementById('p1-ulti-text');
     if (player1.ultiPhraseTimer > 0) {
         p1UltiDiv.innerText = formatCharacterName(p1Choice) + " : \"" + player1.ultiPhrase + "\"";

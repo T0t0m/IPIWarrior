@@ -336,7 +336,7 @@ canvas {
 }
 
 .step-btn:hover {
-    background-color: #fff;
+    background: #fff;
     color: #000;
 }
 
@@ -476,7 +476,7 @@ canvas {
 }
 
 #restart-btn:hover {
-    background-color: #fff;
+    background: #fff;
     color: #000;
 }
 
