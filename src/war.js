@@ -120,7 +120,6 @@ function setupConnection() {
     });
 }
 
-// --- Menu de Sélection (Etapes) ---
 function goToStep(step) {
     currentMenuStep = step;
     document.querySelectorAll('.step-container').forEach(el => el.style.display = 'none');
@@ -225,7 +224,7 @@ function selectBg(imageSrc, elementId) {
 function formatCharacterName(filename) {
     if (filename === 'random') return '?';
     let rawName = filename.split('/').pop().replace('.png', '');
-    if (rawName.toLowerCase() === 'le-goat') return 'YANIS';
+    if (rawName.toLowerCase() === 'le-goat') return 'LE GOAT';
     if (rawName.toLowerCase() === 'fx') return 'FX';
     return rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 }
@@ -263,11 +262,16 @@ class Fighter {
         this.fxClockY = 0;
         this.fxClockHit = false;
 
-        this.isCharging = false; // Utilisé par Etienne (et Yvon)
+        this.isCharging = false;
         this.etienneHit = false;
 
         this.benitoHealTimer = 0;
-        this.babies = []; // Gère les 3 bébés de Thomas
+        this.babies = [];
+
+        // Variables spécifiques à Yanis (Le Goat)
+        this.isYanisFlying = false;
+        this.yanisFlyTimer = 0;
+        this.yanisStrikes = [];
 
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
@@ -355,8 +359,7 @@ class Fighter {
             ctx.lineTo(centerX - (20 * dir), topY + 75);
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 50);
-        } else if (this.isAttacking && this.attackType === 'ulti' && this.isCharging) {
-            // Étienne (et Yvon) lève les bras pendant la charge
+        } else if (this.isAttacking && this.attackType === 'ulti' && this.characterName === 'etienne') {
             ctx.moveTo(centerX, topY + 50);
             ctx.lineTo(centerX + (50 * dir), topY + 20);
             ctx.moveTo(centerX, topY + 50);
@@ -374,15 +377,14 @@ class Fighter {
         }
         ctx.stroke();
 
-        if (this.isAttacking) {
+        if (this.isAttacking && !this.isYanisFlying) {
             if (this.attackType === 'punch') {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.beginPath(); ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2); ctx.fill();
             } else if (this.attackType === 'kick') {
                 ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
                 ctx.beginPath(); ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2); ctx.fill();
-            } else if (this.attackType === 'ulti' && this.isCharging) {
-                // Aura d'énergie pour la charge
+            } else if (this.attackType === 'ulti' && this.characterName === 'etienne') {
                 ctx.fillStyle = 'rgba(255, 50, 0, 0.4)';
                 ctx.beginPath(); ctx.arc(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.radius, 0, Math.PI * 2); ctx.fill();
             }
@@ -442,15 +444,31 @@ class Fighter {
         }
 
         this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
 
-        if (this.position.y + this.height + this.velocity.y >= groundY) {
+        // --- GESTION DE LA PHYSIQUE ET DU VOL DE YANIS ---
+        if (this.isYanisFlying) {
             this.velocity.y = 0;
-            this.position.y = groundY - this.height;
-            this.isGrounded = true;
-        } else {
-            this.velocity.y += gravity;
+            this.position.y = groundY - this.height - 220; // Bloqué dans les airs
             this.isGrounded = false;
+            this.yanisFlyTimer--;
+
+            if (this.yanisFlyTimer <= 0) {
+                this.isYanisFlying = false;
+                this.isAttacking = false;
+                this.attackType = null;
+            }
+        } else {
+            // PHYSIQUE NORMALE
+            this.position.y += this.velocity.y;
+
+            if (this.position.y + this.height + this.velocity.y >= groundY) {
+                this.velocity.y = 0;
+                this.position.y = groundY - this.height;
+                this.isGrounded = true;
+            } else {
+                this.velocity.y += gravity;
+                this.isGrounded = false;
+            }
         }
 
         if (this.position.x < 0) this.position.x = 0;
@@ -460,7 +478,7 @@ class Fighter {
 
         if (this.isAttacking) {
             this.attackTimer--;
-            if (this.attackTimer <= 0) {
+            if (this.attackTimer <= 0 && !this.isYanisFlying) {
                 this.isAttacking = false;
                 this.attackType = null;
             }
@@ -469,6 +487,25 @@ class Fighter {
 
     attack(type) {
         if (!isHost) return;
+
+        // DÉTOURNEMENT DE CONTRÔLES POUR LE GOAT (YANIS) PENDANT LE VOL
+        if (this.isYanisFlying) {
+            if ((type === 'punch' || type === 'kick') && this.cooldown <= 0) {
+                const isBig = (type === 'kick');
+                this.yanisStrikes.push({
+                    x: this.position.x + this.width / 2,
+                    width: isBig ? 80 : 30,
+                    type: isBig ? 'big' : 'small',
+                    timer: 15,
+                    hitLaser: false,
+                    hitShockwave: false
+                });
+                // CORRECTION : Temps de recharge réduit pour une meilleure réactivité
+                this.cooldown = isBig ? 25 : 10;
+            }
+            return;
+        }
+
         if (this.isAttacking || this.isStunned || this.isKO || this.isBlocking || this.cooldown > 0) return;
 
         if (type === 'ulti') {
@@ -484,7 +521,7 @@ class Fighter {
             }
             else if (this.characterName === 'etienne') {
                 this.ultiPhrase = "LE DIRECTEUR C'EST MOI !";
-                this.attackTimer = 50; // Temps de la course
+                this.attackTimer = 50;
                 this.isCharging = true;
                 this.etienneHit = false;
             }
@@ -498,7 +535,6 @@ class Fighter {
                 this.ultiPhrase = "J'AI RIEN À PROUVER !"; this.attackTimer = 40;
                 this.health = Math.min(100, this.health + 50); this.benitoHealTimer = 40;
                 updateHealthUI();
-
                 let dist = Math.abs((this.position.x + this.width / 2) - (enemy.position.x + enemy.width / 2));
                 if (dist < 150 && !enemy.isKO) {
                     let pushDir = this.position.x < enemy.position.x ? 1 : -1;
@@ -508,24 +544,22 @@ class Fighter {
                 }
             }
             else if (this.characterName === 'le-goat') {
-                /*
-                 * TODO: ULTI DE YANIS
-                 * Prévu pour une prochaine mise à jour. Le code sera ici.
-                 */
-                this.ultiPhrase = "ULTI EN COURS DE MAJ...";
-                this.attackTimer = 40; // Temps par défaut pour éviter un bug
+                this.ultiPhrase = "GO DEMANDER À L'IA !";
+                this.attackTimer = 300;
+                this.yanisFlyTimer = 300;
+                this.isYanisFlying = true;
+                this.isCharging = false;
+                this.yanisStrikes = [];
             }
             else if (this.characterName === 'stephanie') {
                 this.ultiPhrase = "BONJOUR DU MARDI !"; this.attackTimer = 40;
                 if (!enemy.isKO) {
                     enemy.isStunned = true;
-                    enemy.stunTimer = 180; // Paralyse l'adversaire (3 secondes)
+                    enemy.stunTimer = 180;
                 }
             }
             else if (this.characterName === 'thomas') {
                 this.ultiPhrase = "J'AI FAIT UN GOSSE !"; this.attackTimer = 80;
-
-                // Spawn de 3 gros bébés décalés du côté opposé
                 let spawnSide = this.position.x < canvas.width / 2 ? canvas.width * 0.75 : canvas.width * 0.25;
                 this.babies = [
                     { x: spawnSide - 100, y: -100, hit: false, radius: 45 },
@@ -535,14 +569,11 @@ class Fighter {
             }
             else if (this.characterName === 'yvon') {
                 this.ultiPhrase = "VOUS M'ENTENDEZ ?"; this.attackTimer = 80;
-
-                // Dégâts sur lui-même
                 this.health -= 15;
                 if (this.health < 1) this.health = 1;
                 updateHealthUI();
 
-                // Tirage au sort d'un autre ulti (SANS Yanis)
-                const effects = ['fx', 'etienne', 'stephanie', 'thomas', 'benito'];
+                const effects = ['fx', 'etienne', 'stephanie', 'thomas', 'benito', 'le-goat'];
                 const chosen = effects[Math.floor(Math.random() * effects.length)];
 
                 if (chosen === 'fx') {
@@ -560,6 +591,8 @@ class Fighter {
                     ];
                 } else if (chosen === 'benito') {
                     this.health = Math.min(100, this.health + 50); this.benitoHealTimer = 40; updateHealthUI();
+                } else if (chosen === 'le-goat') {
+                    this.yanisFlyTimer = 300; this.isYanisFlying = true; this.yanisStrikes = [];
                 }
             }
             return;
@@ -638,7 +671,9 @@ function serializePlayer(p) {
         ultCharge: p.ultimateCharge, fxActive: p.fxClockActive, fxY: p.fxClockY,
         ultiPhrase: p.ultiPhrase, ultiTimer: p.ultiPhraseTimer, healTimer: p.benitoHealTimer,
         vx: p.velocity.x,
-        babies: p.babies ? p.babies.map(b => ({ x: b.x, y: b.y, radius: b.radius, hit: b.hit })) : []
+        babies: p.babies ? p.babies.map(b => ({ x: b.x, y: b.y, radius: b.radius, hit: b.hit })) : [],
+        yFly: p.isYanisFlying, yFT: p.yanisFlyTimer,
+        strikes: p.yanisStrikes ? p.yanisStrikes.map(s => ({ x: s.x, width: s.width, type: s.type, timer: s.timer, hitLaser: s.hitLaser, hitShockwave: s.hitShockwave })) : []
     };
 }
 
@@ -651,6 +686,8 @@ function syncGameState(state) {
         p.ultiPhrase = data.ultiPhrase; p.ultiPhraseTimer = data.ultiTimer; p.benitoHealTimer = data.healTimer;
         p.velocity.x = data.vx;
         p.babies = data.babies || [];
+        p.isYanisFlying = data.yFly || false; p.yanisFlyTimer = data.yFT || 0;
+        p.yanisStrikes = data.strikes || [];
     };
     applyState(player1, state.p1);
     applyState(player2, state.p2);
@@ -715,11 +752,12 @@ function startGame() {
 
     document.getElementById('ui').style.display = 'flex';
 
-    player1.health = 100; player1.position = { x: 150, y: 0 }; player1.isKO = false;
-    player1.isStunned = false; player1.isBlocking = false; player1.isAttacking = false; player1.cooldown = 0; player1.ultimateCharge = 0; player1.fxClockActive = false; player1.isCharging = false; player1.benitoHealTimer = 0; player1.ultiPhraseTimer = 0; player1.babies = []; player1.etienneHit = false;
+    // CORRECTION : Restauration de l'animation de chute au début du combat (y: 0 au lieu du sol)
+    player1.health = 100; player1.position = { x: 150, y: 0 }; player1.velocity = { x: 0, y: 0 }; player1.isGrounded = false; player1.isKO = false;
+    player1.isStunned = false; player1.isBlocking = false; player1.isAttacking = false; player1.cooldown = 0; player1.ultimateCharge = 0; player1.fxClockActive = false; player1.isCharging = false; player1.benitoHealTimer = 0; player1.ultiPhraseTimer = 0; player1.babies = []; player1.yanisStrikes = []; player1.etienneHit = false; player1.isYanisFlying = false; player1.yanisFlyTimer = 0;
 
-    player2.health = 100; player2.position = { x: 800, y: 0 }; player2.isKO = false;
-    player2.isStunned = false; player2.isBlocking = false; player2.isAttacking = false; player2.cooldown = 0; player2.ultimateCharge = 0; player2.fxClockActive = false; player2.isCharging = false; player2.benitoHealTimer = 0; player2.ultiPhraseTimer = 0; player2.babies = []; player2.etienneHit = false;
+    player2.health = 100; player2.position = { x: 800, y: 0 }; player2.velocity = { x: 0, y: 0 }; player2.isGrounded = false; player2.isKO = false;
+    player2.isStunned = false; player2.isBlocking = false; player2.isAttacking = false; player2.cooldown = 0; player2.ultimateCharge = 0; player2.fxClockActive = false; player2.isCharging = false; player2.benitoHealTimer = 0; player2.ultiPhraseTimer = 0; player2.babies = []; player2.yanisStrikes = []; player2.etienneHit = false; player2.isYanisFlying = false; player2.yanisFlyTimer = 0;
 
     updateHealthUI(); timer = 99; document.getElementById('timer').innerText = timer;
     document.getElementById('display-text').style.display = 'none';
@@ -765,30 +803,24 @@ function animate() {
             else { player1.side = 'right'; player2.side = 'left'; }
         }
 
-        player1.isBlocking = keys.KeyS.pressed && player1.isGrounded;
-        player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded;
+        player1.isBlocking = keys.KeyS.pressed && player1.isGrounded && !player1.isYanisFlying;
+        player2.isBlocking = keys.ArrowDown.pressed && player2.isGrounded && !player2.isYanisFlying;
 
         // --- P1 Move & Etienne Charge ---
         player1.velocity.x = 0;
         if (player1.isCharging) {
-            player1.velocity.x = player1.side === 'left' ? 20 : -20; // Vitesse de course
-
+            player1.velocity.x = player1.side === 'left' ? 20 : -20;
             if (circleRectCollision(player1.attackBox, player2) && !player2.isKO) {
-                // Pousse l'adversaire pendant la charge
                 player2.position.x += player1.velocity.x;
                 if (player2.position.x < 0) player2.position.x = 0;
                 if (player2.position.x + player2.width > canvas.width) player2.position.x = canvas.width - player2.width;
-
                 if (!player1.etienneHit) {
                     player1.etienneHit = true;
                     dealUltiDamage(player2, 35, player1.side === 'left' ? 20 : -20);
                 }
             }
-
             if (player1.attackTimer <= 0) {
-                player1.isCharging = false;
-                player1.isAttacking = false;
-                player1.etienneHit = false;
+                player1.isCharging = false; player1.isAttacking = false; player1.etienneHit = false;
             }
         } else if (!player1.isStunned && !player1.isKO && !player1.isBlocking) {
             if (keys.KeyA.pressed || keys.KeyQ.pressed) player1.velocity.x = -6;
@@ -799,28 +831,23 @@ function animate() {
         player2.velocity.x = 0;
         if (player2.isCharging) {
             player2.velocity.x = player2.side === 'left' ? 20 : -20;
-
             if (circleRectCollision(player2.attackBox, player1) && !player1.isKO) {
                 player1.position.x += player2.velocity.x;
                 if (player1.position.x < 0) player1.position.x = 0;
                 if (player1.position.x + player1.width > canvas.width) player1.position.x = canvas.width - player1.width;
-
                 if (!player2.etienneHit) {
                     player2.etienneHit = true;
                     dealUltiDamage(player1, 35, player2.side === 'left' ? 20 : -20);
                 }
             }
-
             if (player2.attackTimer <= 0) {
-                player2.isCharging = false;
-                player2.isAttacking = false;
-                player2.etienneHit = false;
+                player2.isCharging = false; player2.isAttacking = false; player2.etienneHit = false;
             }
         } else if (!player2.isStunned && !player2.isKO && !player2.isBlocking) {
             if (keys.ArrowLeft.pressed) player2.velocity.x = -6; else if (keys.ArrowRight.pressed) player2.velocity.x = 6;
         }
 
-        // GESTION PHYSIQUE DES AUTRES ULTIMES
+        // --- GESTION PHYSIQUE DES ULTIMES (Par l'hôte) ---
         [player1, player2].forEach(p => {
             let enemy = p === player1 ? player2 : player1;
 
@@ -835,6 +862,37 @@ function animate() {
                 if (p.fxClockY > canvas.height + 100) p.fxClockActive = false;
             }
 
+            // Gestion des Lasers de Yanis (Le Goat)
+            if (p.yanisStrikes && p.yanisStrikes.length > 0) {
+                p.yanisStrikes.forEach(strike => {
+                    strike.timer--;
+
+                    let laserLeft = strike.x - strike.width / 2;
+                    let laserRight = strike.x + strike.width / 2;
+                    let enemyLeft = enemy.position.x;
+                    let enemyRight = enemy.position.x + enemy.width;
+
+                    if (strike.timer > 0 && !strike.hitLaser) {
+                        if (enemyRight > laserLeft && enemyLeft < laserRight && !enemy.isKO) {
+                            strike.hitLaser = true;
+                            dealUltiDamage(enemy, strike.type === 'big' ? 18 : 8, p.side === 'left' ? 15 : -15);
+                        }
+                    }
+
+                    if (strike.timer <= 0 && strike.type === 'big' && !strike.hitShockwave) {
+                        let shockLeft = strike.x - 120;
+                        let shockRight = strike.x + 120;
+
+                        if (enemy.isGrounded && enemyRight > shockLeft && enemyLeft < shockRight && !enemy.isKO) {
+                            strike.hitShockwave = true;
+                            dealUltiDamage(enemy, 15, p.side === 'left' ? 30 : -30);
+                        }
+                    }
+                });
+
+                p.yanisStrikes = p.yanisStrikes.filter(strike => strike.timer > (strike.type === 'big' ? -15 : 0));
+            }
+
             // Gestion de la chute des bébés de Thomas
             if (p.babies && p.babies.length > 0) {
                 p.babies.forEach(baby => {
@@ -842,7 +900,7 @@ function animate() {
                     if (baby.y >= groundY - baby.radius && !baby.hit) {
                         baby.hit = true;
                         if (Math.abs((enemy.position.x + enemy.width / 2) - baby.x) < 130 && !enemy.isBlocking && !enemy.isKO) {
-                            dealUltiDamage(enemy, 15, baby.x < enemy.position.x ? 35 : -35); // 15 dégâts par bébé touché
+                            dealUltiDamage(enemy, 15, baby.x < enemy.position.x ? 35 : -35);
                         }
                     }
                 });
@@ -878,7 +936,20 @@ function animate() {
             ctx.moveTo(canvas.width / 2, p.fxClockY); ctx.lineTo(canvas.width / 2 + 30, p.fxClockY + 15); ctx.stroke();
         }
 
-        // Dessin des gros bébés
+        if (p.yanisStrikes && p.yanisStrikes.length > 0) {
+            p.yanisStrikes.forEach(strike => {
+                if (strike.timer > 0) {
+                    ctx.fillStyle = strike.type === 'big' ? 'rgba(255, 0, 0, 0.85)' : 'rgba(255, 100, 100, 0.7)';
+                    ctx.fillRect(strike.x - strike.width / 2, p.position.y + p.height, strike.width, groundY - (p.position.y + p.height));
+                } else if (strike.type === 'big' && strike.timer > -15) {
+                    ctx.fillStyle = 'rgba(255, 69, 0, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(strike.x, groundY, 120, 0, Math.PI, true);
+                    ctx.fill();
+                }
+            });
+        }
+
         if (p.babies && p.babies.length > 0) {
             p.babies.forEach(baby => {
                 ctx.fillStyle = '#ffb6c1'; ctx.beginPath(); ctx.arc(baby.x, baby.y, baby.radius, 0, Math.PI * 2); ctx.fill();
@@ -984,8 +1055,12 @@ function handleInput(keyString, codeString, isKeyDown) {
         if (isKeyDown && canP1Act) {
             if (codeString === 'KeyD' && !player1.isBlocking) keys.KeyD.pressed = true;
             if ((codeString === 'KeyA' || codeString === 'KeyQ') && !player1.isBlocking) keys.KeyA.pressed = true;
-            if ((codeString === 'KeyW' || codeString === 'KeyZ') && player1.isGrounded && !player1.isBlocking) player1.velocity.y = -18;
-            if (codeString === 'KeyS' && player1.isGrounded && !player1.isAttacking) {
+
+            if ((codeString === 'KeyW' || codeString === 'KeyZ') && player1.isGrounded && !player1.isBlocking && !player1.isYanisFlying) {
+                player1.velocity.y = -18;
+                player1.isGrounded = false;
+            }
+            if (codeString === 'KeyS' && player1.isGrounded && !player1.isAttacking && !player1.isYanisFlying) {
                 keys.KeyS.pressed = true;
                 if (!player1.isBlocking) { player1.isBlocking = true; player1.perfectBlockWindow = 10; }
             }
@@ -1005,8 +1080,12 @@ function handleInput(keyString, codeString, isKeyDown) {
         if (isKeyDown && canP2Act) {
             if (codeString === 'ArrowRight' && !player2.isBlocking) keys.ArrowRight.pressed = true;
             if (codeString === 'ArrowLeft' && !player2.isBlocking) keys.ArrowLeft.pressed = true;
-            if (codeString === 'ArrowUp' && player2.isGrounded && !player2.isBlocking) player2.velocity.y = -18;
-            if (codeString === 'ArrowDown' && player2.isGrounded && !player2.isAttacking) {
+
+            if (codeString === 'ArrowUp' && player2.isGrounded && !player2.isBlocking && !player2.isYanisFlying) {
+                player2.velocity.y = -18;
+                player2.isGrounded = false;
+            }
+            if (codeString === 'ArrowDown' && player2.isGrounded && !player2.isAttacking && !player2.isYanisFlying) {
                 keys.ArrowDown.pressed = true;
                 if (!player2.isBlocking) { player2.isBlocking = true; player2.perfectBlockWindow = 10; }
             }
